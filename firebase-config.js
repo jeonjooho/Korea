@@ -3,13 +3,14 @@
 // Keep this file in the same GitHub folder as index.html, start.html, input.html, screen.html.
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDwIzffj-frpoHdXCwikjXJQUA3nfV0IH4",
+  authDomain: "juho-jeon.firebaseapp.com",
+  databaseURL: "https://juho-jeon-default-rtdb.firebaseio.com",
+  projectId: "juho-jeon",
+  storageBucket: "juho-jeon.firebasestorage.app",
+  messagingSenderId: "959274699904",
+  appId: "1:959274699904:web:2aaf467c589fe350b0ea65",
+  measurementId: "G-H91LRVJ3CB"
 };
 
 firebase.initializeApp(firebaseConfig);
