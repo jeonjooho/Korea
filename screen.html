@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Screen Display</title>
+<style>
+*{box-sizing:border-box} body{margin:0;width:100vw;height:100dvh;overflow:hidden;font-family:Arial,sans-serif;background:#eaf5ff;color:#102044}
+#titleArea{position:fixed;left:3vw;right:3vw;top:24px;text-align:center;z-index:2} #screenTitle{margin:0} #screenSubtitle{margin:10px 0 0}
+#largeBox{position:fixed;overflow:hidden;border-radius:22px;box-shadow:0 12px 34px rgba(60,100,160,.22);z-index:1}
+#list{position:relative;display:flex;flex-direction:column}
+.entry{position:relative;display:grid;grid-template-columns:220px 150px 1fr 120px;align-items:center;gap:10px;border:0!important;outline:0!important;border-radius:14px;overflow:hidden;background-size:cover;background-position:center}.randomEntry{border:0!important;outline:0!important}.randomEntry *{box-sizing:border-box}.randomEntry .message{overflow-wrap:anywhere;word-break:break-word}.randomEntry .name,.randomEntry .org,.randomEntry .time{min-width:0}
+.name,.org,.message,.time{position:relative;z-index:1;overflow:hidden;text-overflow:ellipsis} .name,.org{white-space:nowrap} .message{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}.handwrittenMessage{width:100%;max-height:260px;object-fit:contain;background:transparent;border-radius:0;padding:0}.signature img{max-width:100%;max-height:54px;object-fit:contain;position:relative;z-index:1}
+#fullscreenBtn{position:fixed;right:18px;bottom:18px;z-index:20;border:0;border-radius:12px;padding:12px 16px;background:#17335f;color:white;font-weight:900;cursor:pointer}
+#videoOverlay{display:none;position:fixed;inset:0;z-index:80;background:#000} #videoOverlay video,#videoOverlay iframe{width:100vw;height:100dvh;border:0;object-fit:contain} #closeVideo{position:fixed;right:18px;top:18px;z-index:81}
+#localVideoPicker{position:fixed;left:18px;bottom:18px;z-index:30;background:#ffffffe8;border:1px solid #ccc;border-radius:12px;padding:10px;max-width:340px}
+</style></head><body>
+<div id="titleArea"><h1 id="screenTitle"></h1><p id="screenSubtitle"></p></div>
+<div id="largeBox"><div id="list"></div></div>
+<button id="fullscreenBtn">Full Screen</button>
+<div id="localVideoPicker"><b>이 스크린 컴퓨터의 로컬 영상</b><br><input id="localVideoFile" type="file" accept="video/*"><div id="localVideoStatus">로컬 영상을 선택한 뒤 시작 화면에서 LOCAL을 사용하세요.</div></div>
+<div id="videoOverlay"><button id="closeVideo">닫기</button><video id="videoPlayer" controls playsinline preload="auto"></video><iframe id="videoFrame" style="display:none"></iframe></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+
+const DEFAULT_SETTINGS = {"indexTitle": "Digital Visitor's Book", "indexTitleFont": "Arial", "indexTitleSize": 36, "indexTitleColor": "#0b4fd7", "indexSubtitle": "Firebase online version for GitHub Pages", "indexBgColor": "#eaf4ff", "indexBgImage": "", "indexBoxColor": "#ffffff", "indexBoxImage": "", "indexBoxWidth": 680, "indexBoxTop": 0, "adminBtnText": "Admin / Start", "inputBtnText": "Open Input Screen", "screenBtnText": "Open Screen Display", "adminBtnX": 0, "adminBtnY": 0, "adminBtnWidth": 100, "adminBtnHeight": 60, "adminBtnColor": "#0b4fd7", "adminBtnImage": "", "adminBtnFont": "Arial", "adminBtnFontSize": 22, "adminBtnTextColor": "#ffffff", "inputBtnX": 0, "inputBtnY": 0, "inputBtnWidth": 100, "inputBtnHeight": 60, "inputBtnColor": "#7c3aed", "inputBtnImage": "", "inputBtnFont": "Arial", "inputBtnFontSize": 22, "inputBtnTextColor": "#ffffff", "screenBtnX": 0, "screenBtnY": 0, "screenBtnWidth": 100, "screenBtnHeight": 60, "screenBtnColor": "#209147", "screenBtnImage": "", "screenBtnFont": "Arial", "screenBtnFontSize": 22, "screenBtnTextColor": "#ffffff", "inputBgColor": "#eaf4ff", "inputBgImage": "", "inputHomeBoxColor": "#ffffff", "inputHomeBoxImage": "", "inputHomeTitle": "Digital Visitor's Book", "inputHomeHint": "Please choose one option.", "leaveBtnText": "Leave a Message", "videoBtnText": "Watch Video", "quizBtnText": "Play Quiz", "leaveBtnX": 0, "leaveBtnY": 0, "leaveBtnWidth": 48, "leaveBtnHeight": 88, "leaveBtnColor": "#0b4fd7", "leaveBtnImage": "", "leaveBtnFont": "Arial", "leaveBtnFontSize": 28, "leaveBtnTextColor": "#ffffff", "videoBtnX": 52, "videoBtnY": 0, "videoBtnWidth": 48, "videoBtnHeight": 88, "videoBtnColor": "#7c3aed", "videoBtnImage": "", "videoBtnFont": "Arial", "videoBtnFontSize": 28, "videoBtnTextColor": "#ffffff", "quizBtnX": 0, "quizBtnY": 108, "quizBtnWidth": 100, "quizBtnHeight": 88, "quizBtnColor": "#209147", "quizBtnImage": "", "quizBtnFont": "Arial", "quizBtnFontSize": 28, "quizBtnTextColor": "#ffffff", "messageTitle": "Digital Visitor's Book", "messageHint": "Please leave your name, organization, signature, and message.", "messageFormBoxColor": "#ffffff", "messageFormBoxImage": "", "homeButtonText": "Home", "fullscreenButtonText": "전체화면", "clearSigButtonText": "Clear Signature", "submitButtonText": "Submit Message", "homeBtnX": 0, "homeBtnY": 0, "homeBtnWidth": 90, "homeBtnHeight": 52, "homeBtnColor": "#e8eef8", "homeBtnImage": "", "homeBtnFont": "Arial", "homeBtnFontSize": 18, "homeBtnTextColor": "#17335f", "fullscreenBtnX": 100, "fullscreenBtnY": 0, "fullscreenBtnWidth": 130, "fullscreenBtnHeight": 52, "fullscreenBtnColor": "#17335f", "fullscreenBtnImage": "", "fullscreenBtnFont": "Arial", "fullscreenBtnFontSize": 18, "fullscreenBtnTextColor": "#ffffff", "clearSigBtnX": 0, "clearSigBtnY": 0, "clearSigBtnWidth": 180, "clearSigBtnHeight": 56, "clearSigBtnColor": "#e8eef8", "clearSigBtnImage": "", "clearSigBtnFont": "Arial", "clearSigBtnFontSize": 18, "clearSigBtnTextColor": "#17335f", "submitBtnX": 192, "submitBtnY": 0, "submitBtnWidth": 210, "submitBtnHeight": 56, "submitBtnColor": "#0b4fd7", "submitBtnImage": "", "submitBtnFont": "Arial", "submitBtnFontSize": 18, "submitBtnTextColor": "#ffffff", "videoUrl": "", "preloadVideo": "yes", "localVideoEnabled": "yes", "quizTitle": "Play Quiz", "quizText": "Scan this QR code to participate in the quiz.", "quizQrImage": "", "quizWebsiteUrl": "", "screenTitle": "Welcome to the Republic of Korea booth at IAEA's 70th General Conference!", "screenSubtitle": "Your messages inspire us and the world to build a safer and better future through nuclear cooperation.", "screenTitleFont": "Arial", "screenTitleSize": 54, "screenTitleColor": "#08377d", "screenSubtitleFont": "Arial", "screenSubtitleSize": 26, "screenSubtitleColor": "#142855", "visibleEntryCount": 6, "messageColorMode": "fixed", "messageFixedColor": "#0752c9", "messageRandomPalette": "#0752c9,#0b7a53,#c2410c,#7c3aed,#be123c,#0369a1,#a16207", "screenBgColor": "#eaf5ff", "screenBgImages": "", "screenBgInterval": 10, "scrollEnabled": "yes", "scrollSpeed": 18, "layoutMode": "vertical", "largeBoxX": 2, "largeBoxY": 180, "largeBoxWidth": 96, "largeBoxHeight": 68, "largeBoxColor": "rgba(255,255,255,0.62)", "largeBoxImage": "", "entryBoxWidth": 100, "entryBoxHeight": 12, "entryGap": 8, "entryPaddingX": 14, "entryPaddingY": 12, "entryBoxColor": "rgba(255,255,255,0.86)", "entryBoxImage": "", "nameFont": "Arial", "nameSize": 23, "nameWeight": "800", "nameColor": "#071632", "orgFont": "Arial", "orgSize": 18, "orgWeight": "400", "orgColor": "#415276", "signatureFont": "Arial", "signatureSize": 14, "signatureWeight": "400", "signatureColor": "#071632", "messageFont": "Arial", "messageSize": 24, "messageWeight": "800", "messageColor": "#0752c9", "timeFont": "Arial", "timeSize": 18, "timeWeight": "400", "timeColor": "#1a2946", "randomZoneX": 5, "randomZoneY": 160, "randomZoneWidth": 90, "randomZoneHeight": 70, "randomEntryWidth": 320, "randomEntryHeight": 160, "randomMemoFormat": "rounded", "randomEntryBgColor": "rgba(255,255,255,0.90)", "randomEntryBgImage": "", "randomEntryBorderRadius": 22, "randomEntryShadow": "yes", "randomEntryRotate": "yes", "randomKakaoProfileImage": "", "randomKakaoBubbleColor": "#FEE500", "randomKakaoBubbleColorMode": "fixed", "randomKakaoBubblePalette": "#FEE500,#ffffff,#dff3ff,#e8f5e9,#fff3cd,#fce7f3", "randomOverflowShuffleEnabled": "yes", "randomShuffleInterval": 12, "randomFadeEnabled": "yes", "randomFadeDuration": 1.2, "messageHandwritingEnabled": "no", "messageHandwritingBoxHeight": 620, "messageHandwritingBoxWidth": 900, "messageHandwritingBoxHeightPercent": 72, "messageHandwritingBoxWidthPercent": 86, "messageHandwritingBoxShape": "rounded", "messageHandwritingBoxBgColor": "#ffffff", "messageHandwritingBoxBgImage": "", "messageHandwritingBoxBorderRadius": 22, "messageHandwritingBoxBorderStyle": "dashed", "messageHandwritingBoxShadow": "yes", "screenHandwritingEntryWidth": 360, "screenHandwritingEntryHeight": 220, "randomZoneHeightPercent": 70};
+function mergedSettings(s){ return Object.assign({}, DEFAULT_SETTINGS, s || {}); }
+function safeCssUrl(url){ url=String(url||'').trim(); return url ? `url("${url.replace(/"/g, '%22')}")` : 'none'; }
+function bgStyle(color, image){ return image ? `${color} ${safeCssUrl(image)} center/cover no-repeat` : color; }
+function fontList(){return ['Arial','Helvetica','Georgia','Times New Roman','Trebuchet MS','Verdana','Courier New','Noto Sans KR','sans-serif'];}
+function normalizeUrl(url){ url=String(url||'').trim(); if(!url)return ''; if(!/^https?:\/\//i.test(url) && !url.startsWith('LOCAL')) url='https://'+url; return url; }
+
+function normalizePercentHeight(value, fallback, maxValue){
+ const n=Number(value);
+ const max=Number(maxValue||100);
+ if(!Number.isFinite(n)) return fallback;
+ const pct=n>100 ? (n/window.innerHeight*100) : n;
+ return Math.max(1,Math.min(max,pct));
+}
+function percentHeightCss(value, fallback){
+ return normalizePercentHeight(value, fallback, 100)+'vh';
+}
+
+
+if(typeof db==='undefined'){document.body.insertAdjacentHTML('afterbegin','<div style="position:fixed;inset:0;z-index:9999;background:white;color:#b91c1c;padding:30px;font:20px Arial">Firebase is not initialized. Please check firebase-config.js.</div>'); throw new Error('Firebase db is not defined');}
+const settingsRef=db.ref('visitorBook/settings'), entriesRef=db.ref('visitorBook/entries'), actionRef=db.ref('visitorBook/screenAction');
+let settings=mergedSettings(), entries=[], bgTimer=null, bgIndex=0, ticker=null, selectedLocalVideoUrl='', randomShuffleTimer=null, randomFadeTimer=null;
+settingsRef.on('value',snap=>{settings=mergedSettings(snap.val());applySettings();render();preload();});
+entriesRef.on('value',snap=>{const v=snap.val()||{};entries=Object.keys(v).map(k=>Object.assign({key:k},v[k]));render();});
+function applySettings(){
+ document.body.style.background=settings.screenBgColor;
+ const imgs=String(settings.screenBgImages||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+ if(bgTimer)clearInterval(bgTimer); if(imgs.length){function setBg(){document.body.style.background=`${settings.screenBgColor} url("${imgs[bgIndex%imgs.length]}") center/cover no-repeat`;bgIndex++;} setBg(); bgTimer=setInterval(setBg,Math.max(1,Number(settings.screenBgInterval||10))*1000);}
+ screenTitle.textContent=settings.screenTitle; screenSubtitle.textContent=settings.screenSubtitle;
+ screenTitle.style.cssText=`font-family:${settings.screenTitleFont};font-size:${settings.screenTitleSize}px;color:${settings.screenTitleColor}`;
+ screenSubtitle.style.cssText=`font-family:${settings.screenSubtitleFont};font-size:${settings.screenSubtitleSize}px;color:${settings.screenSubtitleColor}`;
+ applyConfiguredLargeBox();
+ localVideoPicker.style.display=settings.localVideoEnabled==='no'?'none':'block';
+}
+function messageColor(i){if(settings.messageColorMode==='random'){const p=String(settings.messageRandomPalette||'').split(',').map(x=>x.trim()).filter(Boolean);return p.length?p[i%p.length]:settings.messageFixedColor}return settings.messageFixedColor;}
+function pctValue(v, fallback){const n=Number(v);return Number.isFinite(n)?Math.max(1,Math.min(100,n)):fallback;}
+function heightPercent(v,fallback){const n=Number(v);if(!Number.isFinite(n))return fallback;if(n>100)return Math.max(1,Math.min(100,n/window.innerHeight*100));return Math.max(1,Math.min(100,n));}
+function randomZoneHeightPx(){
+ const p=normalizePercentHeight(settings.randomZoneHeightPercent ?? settings.randomZoneHeight,70,100);
+ const top=Number(settings.randomZoneY||0);
+ const desired=window.innerHeight*p/100;
+ const available=Math.max(90,window.innerHeight-Math.max(0,top)-12);
+ return Math.max(90,Math.min(desired,available));
+}
+function applyConfiguredLargeBox(){
+ largeBox.style.left=settings.largeBoxX+'vw';
+ largeBox.style.top=settings.largeBoxY+'px';
+ largeBox.style.width=settings.largeBoxWidth+'vw';
+ largeBox.style.height=percentHeightCss(settings.largeBoxHeight,68);
+ largeBox.style.background=bgStyle(settings.largeBoxColor,settings.largeBoxImage);
+ largeBox.style.boxShadow='0 12px 34px rgba(60,100,160,.22)';
+ largeBox.style.borderRadius='22px';
+ largeBox.style.overflow='hidden';
+ largeBox.style.zIndex='1';
+ list.style.width='auto';
+ list.style.height='auto';
+}
+function applyRandomCanvasBox(){
+ largeBox.style.left='0';
+ largeBox.style.top='0';
+ largeBox.style.width='100vw';
+ largeBox.style.height='100dvh';
+ largeBox.style.background='transparent';
+ largeBox.style.boxShadow='none';
+ largeBox.style.borderRadius='0';
+ largeBox.style.overflow='visible';
+ largeBox.style.zIndex='3';
+ list.style.width='100vw';
+ list.style.height='100dvh';
+}
+function randomEntryBaseHeightPx(){const h=Number(settings.randomEntryHeight||160);return Math.max(70,Math.min(window.innerHeight*0.9,Number.isFinite(h)?h:160));}
+function screenHandwritingWidthPx(){const w=Number(settings.screenHandwritingEntryWidth||settings.randomEntryWidth||360);return Math.max(120,Math.min(window.innerWidth*0.95,Number.isFinite(w)?w:360));}
+function screenHandwritingHeightPx(){const h=Number(settings.screenHandwritingEntryHeight||settings.randomEntryHeight||220);return Math.max(80,Math.min(window.innerHeight*0.95,Number.isFinite(h)?h:220));}
+function handwritingBoxStyle(){const shape=String(settings.messageHandwritingBoxShape||'rounded');const radius=shape==='square'?0:(shape==='pill'?999:Number(settings.messageHandwritingBoxBorderRadius||22));const border=(shape==='none'||settings.messageHandwritingBoxBorderStyle==='none')?'0':('2px '+(settings.messageHandwritingBoxBorderStyle||'dashed')+' #8cb0dd');const shadow=settings.messageHandwritingBoxShadow==='no'?'none':'0 10px 28px rgba(20,40,80,.18)';return `border:${border};border-radius:${radius}px;box-shadow:${shadow};background:${bgStyle(settings.messageHandwritingBoxBgColor||settings.randomEntryBgColor||'#fff',settings.messageHandwritingBoxBgImage||settings.randomEntryBgImage||'')}`;}
+function randomFormatStyle(i){
+ let fmt=String(settings.randomMemoFormat||'rounded');
+ if(!['rounded','kakao'].includes(fmt)) fmt='rounded';
+ const radius=Number(settings.randomEntryBorderRadius||22);
+ const shadow=settings.randomEntryShadow==='no'?'none':'0 12px 30px rgba(20,40,80,.22)';
+ const rotate=settings.randomEntryRotate==='no'?0:((i%5)-2)*1.2;
+ let extra=`border:0!important;outline:0!important;border-radius:${radius}px;box-shadow:${shadow};transform:rotate(${rotate}deg);`;
+ if(fmt==='sticky')extra+=`background-color:${settings.randomEntryBgColor||'rgba(255,248,190,.95)'};`;
+ if(fmt==='polaroid')extra+=`background:#fff;padding-bottom:${Math.max(24,Number(settings.entryPaddingY||12)+20)}px;`;
+ if(fmt==='minimal')extra+=`box-shadow:${settings.randomEntryShadow==='no'?'none':'0 6px 14px rgba(20,40,80,.12)'};`;
+ return extra;
+}
+function estimateRandomDimensions(e){
+ const baseW=Number(settings.randomEntryWidth||320);
+ const baseH=randomEntryBaseHeightPx();
+ const zoneW=Math.max(240,window.innerWidth*Number(settings.randomZoneWidth||90)/100);
+ const zoneH=randomZoneHeightPx();
+ const safe=24;
+ if(e.messageMode==='handwriting'&&e.messageImage){
+  const hwW=screenHandwritingWidthPx();
+  const hwH=screenHandwritingHeightPx();
+  return {w:Math.min(zoneW-safe,Math.max(120,hwW)),h:Math.min(zoneH-safe,Math.max(80,hwH))};
+ }
+ const msg=String(e.message||'');
+ const msgLen=msg.length;
+ let fmt=String(settings.randomMemoFormat||'rounded');
+ if(!['rounded','kakao'].includes(fmt)) fmt='rounded';
+ const fontSize=Number(settings.messageSize||24);
+ const minW=Math.max(260,baseW);
+ const maxW=Math.max(minW,zoneW-safe);
+ const desiredW=fmt==='kakao' ? baseW+Math.min(520,msgLen*6) : baseW+Math.min(720,msgLen*7.5);
+ const autoW=Math.min(maxW,Math.max(minW,desiredW));
+ const sideReserve=fmt==='kakao'?95:130;
+ const charsPerLine=Math.max(6,Math.floor((autoW-sideReserve)/(fontSize*0.50)));
+ const lines=Math.max(1,Math.ceil(msgLen/charsPerLine));
+ const metaExtra=fmt==='kakao'?100:125;
+ const autoH=Math.min(zoneH-safe,Math.max(baseH,metaExtra+lines*fontSize*1.45));
+ return {w:Math.ceil(autoW),h:Math.ceil(autoH)};
+}
+function randomPositions(items, requireFullSize=false){
+ const n=Array.isArray(items)?items.length:Number(items||0);
+ if(n<=0)return [];
+ const left0=window.innerWidth*Number(settings.randomZoneX||5)/100;
+ const top0=Number(settings.randomZoneY||160);
+ const zoneW=Math.max(220,window.innerWidth*Number(settings.randomZoneWidth||90)/100);
+ const zoneH=randomZoneHeightPx();
+ const rotateOn=settings.randomEntryRotate!=='no';
+ const safeGap=rotateOn?42:24;
+ const rawDims=(Array.isArray(items)?items.map(estimateRandomDimensions):Array.from({length:n},()=>({w:Number(settings.randomEntryWidth||320),h:randomEntryBaseHeightPx()})));
+ const dims=rawDims.map(d=>({w:Math.min(Math.max(120,d.w),zoneW-safeGap),h:Math.min(Math.max(90,d.h),zoneH-safeGap)}));
+ let best={cols:1,scale:0,cellW:zoneW,cellH:zoneH/n};
+ for(let cols=1;cols<=n;cols++){
+  const rows=Math.ceil(n/cols);
+  const cellW=zoneW/cols;
+  const cellH=zoneH/rows;
+  let scale=1;
+  for(const d of dims){scale=Math.min(scale,(cellW-safeGap)/d.w,(cellH-safeGap)/d.h);}
+  if(scale>best.scale)best={cols,scale,cellW,cellH};
+ }
+ if(requireFullSize && best.scale<1)return null;
+ const cols=best.cols;
+ const rows=Math.ceil(n/cols);
+ const cellW=zoneW/cols;
+ const cellH=zoneH/rows;
+ const scale=requireFullSize?1:Math.max(0.72,Math.min(1,best.scale));
+ const positions=[];
+ for(let i=0;i<n;i++){
+  const d=dims[i];
+  const w=Math.max(120,Math.min(zoneW-safeGap,Math.floor(d.w*scale)));
+  const h=Math.max(90,Math.min(zoneH-safeGap,Math.floor(d.h*scale)));
+  const col=i%cols,row=Math.floor(i/cols);
+  const cellX=left0+col*cellW;
+  const cellY=top0+row*cellH;
+  const freeX=Math.max(0,cellW-w-safeGap);
+  const freeY=Math.max(0,cellH-h-safeGap);
+  const rx=Math.abs(Math.sin((i+1)*12.9898))*freeX;
+  const ry=Math.abs(Math.cos((i+1)*78.233))*freeY;
+  const x=Math.min(left0+zoneW-w-safeGap/2,Math.max(left0+safeGap/2,cellX+safeGap/2+rx));
+  const y=Math.min(top0+zoneH-h-safeGap/2,Math.max(top0+safeGap/2,cellY+safeGap/2+ry));
+  positions.push({x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),scale});
+ }
+ return positions;
+}
+function getFittingRandomSet(data, requested){
+ const max=Math.min(data.length,requested,100);
+ for(let count=max;count>=1;count--){
+  const subset=data.slice(0,count);
+  const positions=randomPositions(subset,true);
+  if(positions)return {items:subset,positions};
+ }
+ const one=data.slice(0,1);
+ return {items:one,positions:randomPositions(one,false)};
+}
+function initials(name){const t=String(name||'').trim();return t?t.slice(0,1).toUpperCase():'?'}
+function kakaoBubbleColor(i){
+ const mode=String(settings.randomKakaoBubbleColorMode||'fixed');
+ if(mode==='random'){
+  const p=String(settings.randomKakaoBubblePalette||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(p.length)return p[i%p.length];
+ }
+ return settings.randomKakaoBubbleColor||'#FEE500';
+}
+function messageContentHtml(e,i,isKakao=false,scale=1){
+ if(e.messageImage){
+  const full=e.messageMode==='handwriting';
+  return `<img class="handwrittenMessage" src="${e.messageImage}" alt="Handwritten message" style="width:100%;height:${full?'100%':'auto'};max-height:${full?'none':'220px'};object-fit:contain;display:block;background:transparent;border-radius:0;padding:0">`;
+ }
+ const color=isKakao?'#111':messageColor(i);
+ return `<div class="message" style="font-family:${settings.messageFont};font-size:${Math.max(12,(isKakao?Math.max(14,Number(settings.messageSize||24)-4):Number(settings.messageSize||24))*scale)}px;font-weight:${settings.messageWeight};color:${color};line-height:1.25;white-space:normal;overflow:visible">${escapeHtml(e.message)}</div>`;
+}
+function estimateEntryHeight(e,random=false){
+ const base=random?randomEntryBaseHeightPx():Math.max(70,window.innerHeight*normalizePercentHeight(settings.entryBoxHeight,12,40)/100);
+ const msgLen=String(e.message||'').length;
+ const charsPerLine=random?32:55;
+ if(e.messageMode==='handwriting'&&e.messageImage){return Math.max(base,screenHandwritingHeightPx());}
+ const imageExtra=e.messageImage?(random?120:170):0;
+ const approxLines=Math.max(1,Math.ceil(msgLen/charsPerLine));
+ const textExtra=Math.max(0,approxLines-2)*Math.max(20,Number(settings.messageSize||24)*1.2);
+ return Math.max(base, base+textExtra+imageExtra);
+}
+function entryHtml(e,i,random=false,pos=null){
+ const randomBgColor=settings.randomEntryBgColor||settings.entryBoxColor;
+ const randomBgImage=settings.randomEntryBgImage||settings.entryBoxImage;
+ let fmt=String(settings.randomMemoFormat||'rounded');
+ if(!['rounded','kakao'].includes(fmt)) fmt='rounded';
+ const isKakao=random&&fmt==='kakao';
+ const style=random&&pos?`position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.w}px;height:${pos.h}px;padding:${isKakao?8:settings.entryPaddingY}px ${isKakao?8:settings.entryPaddingX}px;${isKakao?'border-radius:18px;box-shadow:none;transform:none;background:transparent!important;display:block;':randomFormatStyle(i)}`:`width:${settings.entryBoxWidth}%;min-height:${estimateEntryHeight(e,false)}px;height:auto;margin-bottom:${settings.entryGap}px;padding:${settings.entryPaddingY}px ${settings.entryPaddingX}px;`;
+ const bg=random?bgStyle(randomBgColor,randomBgImage):bgStyle(settings.entryBoxColor,settings.entryBoxImage);
+ if(e.messageMode==='handwriting'&&e.messageImage){
+  return `<article class="entry randomEntry handwritingEntry" style="${style}${handwritingBoxStyle()};display:block;overflow:hidden">${messageContentHtml(e,i,false,pos&&pos.scale?pos.scale:1)}</article>`;
+ }
+ if(isKakao){
+  const bubbleColor=kakaoBubbleColor(i);
+  const profileImage=String(e.profileImage||settings.randomKakaoProfileImage||'').trim();
+  const profile=profileImage?`<img src="${profileImage.replace(/"/g,'%22')}" alt="profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`<span style="display:grid;place-items:center;width:100%;height:100%;font-weight:900;color:#333;font-size:22px">${escapeHtml(initials(e.name))}</span>`;
+  return `<article class="entry randomEntry kakaoEntry" style="${style}"><div style="display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:start;width:100%;height:100%"><div style="width:48px;height:48px;border-radius:50%;background:#d9d9d9;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)">${profile}</div><div style="min-width:0"><div class="name" style="font-family:${settings.nameFont};font-size:${Math.max(13,Number(settings.nameSize||23)-5)}px;font-weight:${settings.nameWeight};color:${settings.nameColor};margin-bottom:5px">${escapeHtml(e.name)}</div><div style="position:relative;background:${bubbleColor};border-radius:4px 16px 16px 16px;padding:12px 14px;min-height:${Math.max(54,(pos?pos.h:160)-86)}px;box-shadow:0 3px 10px rgba(0,0,0,.10)"><div class="org" style="font-family:${settings.orgFont};font-size:${Math.max(11,Number(settings.orgSize||18)-4)}px;font-weight:${settings.orgWeight};color:${settings.orgColor};margin-bottom:5px">${escapeHtml(e.organization)}</div>${messageContentHtml(e,i,true,pos&&pos.scale?pos.scale:1)}<div class="time" style="text-align:right;margin-top:8px;font-family:${settings.timeFont};font-size:${Math.max(10,Number(settings.timeSize||18)-5)}px;font-weight:${settings.timeWeight};color:#665c00">${fmtTime(e.createdAt)}</div></div></div></div></article>`;
+ }
+ if(random){
+  const sc=pos&&pos.scale?pos.scale:1;
+  const randomNameSize=Math.max(12,Number(settings.nameSize||23)*sc);
+  const randomOrgSize=Math.max(10,Number(settings.orgSize||18)*sc);
+  const randomTimeSize=Math.max(10,Number(settings.timeSize||18)*sc);
+  return `<article class="entry randomEntry" style="${style}background:${bg};display:flex!important;flex-direction:column;gap:6px;overflow:hidden;align-items:stretch"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-height:0"><div style="min-width:0;flex:1"><div class="name" style="font-family:${settings.nameFont};font-size:${randomNameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor};line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.name)}</div><div class="org" style="font-family:${settings.orgFont};font-size:${randomOrgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor};line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.organization)}</div></div><div class="time" style="font-family:${settings.timeFont};font-size:${randomTimeSize}px;font-weight:${settings.timeWeight};color:${settings.timeColor};white-space:nowrap;flex:0 0 auto">${fmtTime(e.createdAt)}</div></div><div style="flex:1;min-height:0;display:block;overflow:visible">${messageContentHtml(e,i,false,sc)}</div>${e.signature?`<div class="signature" style="height:36px;text-align:right"><img src="${e.signature}" style="max-height:34px;max-width:42%;object-fit:contain"></div>`:''}</article>`;
+ }
+ return `<article class="entry" style="${style}background:${bg}"><div><div class="name" style="font-family:${settings.nameFont};font-size:${settings.nameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor}">${escapeHtml(e.name)}</div><div class="org" style="font-family:${settings.orgFont};font-size:${settings.orgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor}">${escapeHtml(e.organization)}</div></div><div class="signature" style="font-family:${settings.signatureFont};font-size:${settings.signatureSize}px;font-weight:${settings.signatureWeight};color:${settings.signatureColor}"><img src="${e.signature||''}"></div>${messageContentHtml(e,i,false,pos&&pos.scale?pos.scale:1)}<div class="time" style="font-family:${settings.timeFont};font-size:${settings.timeSize}px;font-weight:${settings.timeWeight};color:${settings.timeColor}">${fmtTime(e.createdAt)}</div></article>`}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function fmtTime(t){const d=new Date(Number(t)||Date.now());const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+
+function shuffleCopy(arr){
+ const a=arr.slice();
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  const t=a[i];a[i]=a[j];a[j]=t;
+ }
+ return a;
+}
+function chooseRandomFittingSet(data, count, keepLatest=true){
+ if(!data.length||count<=0)return {items:[],positions:[]};
+ const latest=data[0];
+ const pool=keepLatest?data.slice(1):data.slice();
+ function makeSample(){
+  if(!keepLatest)return shuffleCopy(data).slice(0,count);
+  const rest=shuffleCopy(pool).slice(0,Math.max(0,count-1));
+  return [latest].concat(rest);
+ }
+ for(let tries=0;tries<24;tries++){
+  const sample=makeSample();
+  const fit=getFittingRandomSet(sample,count);
+  // getFittingRandomSet keeps the first item when it has to reduce count,
+  // so the newest entry remains in the next random group.
+  if(fit.items && fit.items.length && fit.items[0] && fit.items[0].key===latest.key)return fit;
+ }
+ return getFittingRandomSet(makeSample(),count);
+}
+function updateRandomMarkup(markup, useFade){
+ const fadeOn=useFade && settings.randomFadeEnabled==='yes' && list.innerHTML.trim();
+ const dur=Math.max(0.1,Number(settings.randomFadeDuration||1.2))*1000;
+ list.style.transition=fadeOn?`opacity ${dur}ms ease`:'none';
+ if(randomFadeTimer)clearTimeout(randomFadeTimer);
+ if(fadeOn){
+  list.style.opacity='0';
+  randomFadeTimer=setTimeout(()=>{list.innerHTML=markup;list.style.opacity='1';},dur);
+ }else{
+  list.style.opacity='1';
+  list.innerHTML=markup;
+ }
+}
+function clearRandomShuffleTimer(){
+ if(randomShuffleTimer){clearInterval(randomShuffleTimer);randomShuffleTimer=null;}
+}
+function setupRandomShuffleTimer(overflow){
+ clearRandomShuffleTimer();
+ if(settings.layoutMode==='random' && overflow && settings.randomOverflowShuffleEnabled==='yes'){
+  const sec=Math.max(2,Number(settings.randomShuffleInterval||12));
+  randomShuffleTimer=setInterval(()=>render(),sec*1000);
+ }
+}
+
+function render(){
+ if(ticker)cancelAnimationFrame(ticker);
+ list.style.transform='translateY(0)';
+ let data=entries.filter(e=>e.showOnScreen!==false).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100);
+ const visible=Math.max(1,Math.min(100,Number(settings.visibleEntryCount||6)));
+ if(settings.layoutMode==='random'){
+  applyRandomCanvasBox();
+  list.style.display='block';
+  list.style.transform='translateY(0)';
+  if(ticker)cancelAnimationFrame(ticker);
+  if(!data.length){clearRandomShuffleTimer();updateRandomMarkup('<div style="position:fixed;left:0;right:0;top:45vh;text-align:center;font-size:30px;color:#102044">No messages yet.</div>',false);return;}
+  const recentFit=getFittingRandomSet(data,visible);
+  const requested=Math.min(data.length,visible,100);
+  const capacity=Math.max(1,Math.min(requested,(recentFit.items||[]).length));
+  const overflow=data.length>capacity || capacity<requested;
+  let fitting=recentFit;
+  if(overflow && settings.randomOverflowShuffleEnabled==='yes'){
+    fitting=chooseRandomFittingSet(data,capacity,true);
+  }
+  const randomData=fitting.items||[];
+  const positions=fitting.positions||[];
+  const markup=randomData.map((e,i)=>entryHtml(e,i,true,positions[i])).join('');
+  updateRandomMarkup(markup, overflow);
+  setupRandomShuffleTimer(overflow);
+  return;
+ } else {
+  clearRandomShuffleTimer();
+  list.style.opacity='1';
+ }
+ applyConfiguredLargeBox();
+ list.style.display='flex';
+ let shown=data;
+ if(!shown.length){list.innerHTML='<div style="padding:80px;text-align:center;font-size:30px">아직 등록된 메시지가 없습니다.</div>';return}
+ const entryMarkup=shown.map((e,i)=>entryHtml(e,i,false)).join('');
+ // When downward scrolling is enabled and there are at least 3 entries,
+ // duplicate the same entry set above and below the visible set.
+ // This keeps the large box filled and creates a seamless infinite loop.
+ if(settings.scrollEnabled==='yes'&&shown.length>=3){
+  list.innerHTML='<div class="scrollSegment">'+entryMarkup+'</div><div class="scrollSegment">'+entryMarkup+'</div><div class="scrollSegment">'+entryMarkup+'</div>';
+  startScrollDownward();
+ }else{
+  list.innerHTML=entryMarkup;
+ }
+}
+function startScrollDownward(){
+ let y=0,last=0;
+ const segment=list.querySelector('.scrollSegment');
+ if(!segment)return;
+ const cycle=Math.max(1,segment.scrollHeight);
+ list.style.transform=`translateY(${-cycle}px)`;
+ function tick(ts){
+  if(!last)last=ts;
+  const dt=ts-last;last=ts;
+  y+=Number(settings.scrollSpeed||18)*dt/1000;
+  if(y>=cycle)y-=cycle;
+  // Positive movement from -cycle toward 0 makes entries move from top to bottom.
+  list.style.transform=`translateY(${-cycle+y}px)`;
+  ticker=requestAnimationFrame(tick);
+ }
+ ticker=requestAnimationFrame(tick);
+}
+function updateFullscreenButton(){fullscreenBtn.textContent=document.fullscreenElement?'Exit Full Screen':'Full Screen';}
+async function toggleScreenFullscreen(){try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen();}else{await document.exitFullscreen();}}catch(e){console.warn('Full screen mode is not available:',e);}}
+fullscreenBtn.onclick=toggleScreenFullscreen;
+document.addEventListener('fullscreenchange',updateFullscreenButton);
+updateFullscreenButton();
+localVideoFile.onchange=()=>{const f=localVideoFile.files[0]; if(f){selectedLocalVideoUrl=URL.createObjectURL(f);localVideoStatus.textContent='Selected: '+f.name}};
+function getYouTubeId(u){let m=String(u).match(/[?&]v=([^&]+)/)||String(u).match(/youtu\.be\/([^?&/]+)/);return m?m[1]:''} function embedUrl(u){const y=getYouTubeId(u);return y?'https://www.youtube.com/embed/'+y+'?autoplay=1':''}
+function openVideo(url){url=String(url||'').trim(); if(url.toUpperCase()==='LOCAL')url=selectedLocalVideoUrl; if(!url){alert('영상 URL 또는 로컬 영상이 선택되지 않았습니다.');return} videoOverlay.style.display='block'; const emb=embedUrl(url); if(emb){videoPlayer.style.display='none';videoFrame.style.display='block';videoFrame.src=emb}else{videoFrame.style.display='none';videoPlayer.style.display='block';videoPlayer.src=url;videoPlayer.play().catch(()=>{})}}
+function closeVid(){videoOverlay.style.display='none';videoPlayer.pause();videoPlayer.removeAttribute('src');videoFrame.removeAttribute('src')} closeVideo.onclick=closeVid;
+function preload(){if(settings.preloadVideo==='yes'&&settings.videoUrl&&!embedUrl(settings.videoUrl)&&settings.videoUrl.toUpperCase()!=='LOCAL'){videoPlayer.preload='auto';videoPlayer.src=settings.videoUrl;videoPlayer.load();}}
+let lastActionCreatedAt=0;
+let actionListenerReady=false;
+actionRef.on('value',snap=>{
+ const a=snap.val();
+ if(!a||!a.type)return;
+ if(!actionListenerReady){
+  actionListenerReady=true;
+  if(a.createdAt)lastActionCreatedAt=a.createdAt;
+  return;
+ }
+ if(a.createdAt&&a.createdAt===lastActionCreatedAt)return;
+ if(a.createdAt)lastActionCreatedAt=a.createdAt;
+ if(a.type==='open-video-window')openVideo(a.url);
+ if(a.type==='open-quiz-window'){const u=normalizeUrl(a.url||settings.quizWebsiteUrl); if(u){const w=window.open(u,'_blank','noopener,noreferrer,popup=yes,width='+window.screen.availWidth+',height='+window.screen.availHeight+',left=0,top=0'); if(!w){console.warn('Quiz popup was blocked. Please allow popups for this screen page.');}}}
+ if(a.type==='show-visitor-book')closeVid();
+});
+</script></body></html>
