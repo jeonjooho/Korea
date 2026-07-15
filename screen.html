@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Screen Display</title>
+<style>
+*{box-sizing:border-box} body{margin:0;width:100vw;height:100dvh;overflow:hidden;font-family:Arial,sans-serif;background:#eaf5ff;color:#102044}
+.bgLayer{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:0}
+#screenMainTitleArea,#screenSubtitleArea{position:fixed;text-align:center;z-index:2;overflow:hidden;display:flex;align-items:center;justify-content:center;white-space:normal;line-height:1.2;word-break:keep-all;overflow-wrap:anywhere;padding:8px 14px}
+#screenTitle{margin:0;width:100%}
+#screenSubtitle{margin:0;width:100%}
+#largeBox{position:fixed;overflow:hidden;border-radius:22px;box-shadow:0 12px 34px rgba(60,100,160,.22);z-index:1}
+#randomZoneBox{position:fixed;pointer-events:none;border-radius:22px;display:none;box-sizing:border-box;z-index:2}
+#list{position:relative;display:flex;flex-direction:column}
+.entry{position:relative;display:grid;grid-template-columns:220px 150px 1fr 120px;align-items:center;gap:10px;border:0!important;outline:0!important;border-radius:14px;overflow:hidden;background-size:cover;background-position:center}.randomEntry{border:0!important;outline:0!important}.randomEntry *{box-sizing:border-box}.randomEntry .message{overflow-wrap:anywhere;word-break:break-word}.randomEntry .name,.randomEntry .org,.randomEntry .time{min-width:0}
+.name,.org,.message,.time{position:relative;z-index:1;overflow:hidden;text-overflow:ellipsis} .name,.org{white-space:nowrap} .message{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}.handwrittenMessage{width:100%;max-height:260px;object-fit:contain;background:transparent;border-radius:0;padding:0}.signature img{max-width:100%;max-height:54px;object-fit:contain;position:relative;z-index:1}
+#fullscreenBtn{position:fixed;right:18px;bottom:18px;z-index:20;border:0;border-radius:12px;padding:12px 16px;background:#17335f;color:white;font-weight:900;cursor:pointer}
+#videoOverlay{display:none;position:fixed;inset:0;z-index:80;background:#000;opacity:1} #videoOverlay video,#videoOverlay iframe{width:100vw;height:100dvh;border:0;object-fit:contain} #closeVideo{position:fixed;right:18px;top:18px;z-index:81}
+#localVideoPicker{position:fixed;left:18px;bottom:18px;z-index:30;background:#ffffffe8;border:1px solid #ccc;border-radius:12px;padding:10px;max-width:340px}
+#localVideoPicker2{position:fixed;left:18px;bottom:118px;z-index:30;background:#ffffffe8;border:1px solid #ccc;border-radius:12px;padding:10px;max-width:340px}
+#localBgPicker{position:fixed;left:18px;top:18px;z-index:30;background:#ffffffe8;border:1px solid #ccc;border-radius:12px;padding:10px;max-width:340px;max-height:80vh;overflow-y:auto;font-size:13px}
+#localBgPicker div{margin-top:4px}
+
+#boothSelfieQrBox{position:fixed;z-index:25;background:rgba(255,255,255,.92);border-radius:16px;padding:10px;text-align:center;box-shadow:0 8px 24px rgba(20,40,80,.20);font-weight:900;color:#17335f}
+#boothSelfieQrBox img{display:block;width:100%;height:100%;object-fit:contain;border-radius:10px;background:white}
+#boothSelfieQrLabel{font-size:13px;margin-top:6px;line-height:1.2}
+#boothSelfieArea{position:fixed;z-index:3;overflow:hidden;pointer-events:none}
+#boothSelfieList{position:relative;width:100%;height:100%}
+.boothSelfiePhoto{position:relative;overflow:hidden;border-radius:var(--booth-selfie-radius,16px);box-shadow:0 8px 24px rgba(20,40,80,.22);background:#fff;box-sizing:border-box}
+.boothSelfiePhoto img{width:100%;height:100%;object-fit:cover;display:block}
+</style></head><body>
+<div id="bgLayerA" class="bgLayer"></div>
+<div id="bgLayerB" class="bgLayer"></div>
+<div id="screenMainTitleArea"><h1 id="screenTitle"></h1></div>
+<div id="screenSubtitleArea"><p id="screenSubtitle"></p></div>
+<div id="largeBox"><div id="list"></div></div>
+<div id="randomZoneBox"></div>
+<button id="fullscreenBtn">Full Screen</button>
+<div id="localVideoPicker"><b>이 스크린 컴퓨터의 로컬 영상 (영상 1)</b><br><input id="localVideoFile" type="file" accept="video/*"><div id="localVideoStatus">로컬 영상을 선택한 뒤 시작 화면에서 LOCAL을 사용하세요.</div></div>
+<div id="localVideoPicker2"><b>이 스크린 컴퓨터의 로컬 영상 (영상 2)</b><br><input id="localVideoFile2" type="file" accept="video/*"><div id="localVideoStatus2">로컬 영상을 선택한 뒤 시작 화면에서 LOCAL을 사용하세요.</div></div>
+<div id="localBgPicker"><b>이 스크린 컴퓨터의 로컬 배경 이미지</b><br>
+<div>LOCAL1: <input id="localBgFile1" type="file" accept="image/*"></div>
+<div>LOCAL2: <input id="localBgFile2" type="file" accept="image/*"></div>
+<div>LOCAL3: <input id="localBgFile3" type="file" accept="image/*"></div>
+<div>LOCAL4: <input id="localBgFile4" type="file" accept="image/*"></div>
+<div>LOCAL5: <input id="localBgFile5" type="file" accept="image/*"></div>
+<div>LOCAL6: <input id="localBgFile6" type="file" accept="image/*"></div>
+<div>LOCAL7: <input id="localBgFile7" type="file" accept="image/*"></div>
+<div>LOCAL8: <input id="localBgFile8" type="file" accept="image/*"></div>
+<div>LOCAL9: <input id="localBgFile9" type="file" accept="image/*"></div>
+<div>LOCAL10: <input id="localBgFile10" type="file" accept="image/*"></div>
+<div id="localBgStatus">로컬 이미지를 선택한 뒤 시작 화면에서 LOCAL1~LOCAL10을 사용하세요.</div></div>
+
+<div id="boothSelfieQrBox"><img id="boothSelfieQrImg" alt="Booth selfie upload QR"><div id="boothSelfieQrLabel"></div></div>
+<div id="boothSelfieArea"><div id="boothSelfieList"></div></div>
+<div id="videoOverlay"><button id="closeVideo">닫기</button><video id="videoPlayer" controls playsinline preload="auto"></video><iframe id="videoFrame" style="display:none"></iframe></div>
+<video id="videoPreload1" style="display:none" preload="none"></video>
+<video id="videoPreload2" style="display:none" preload="none"></video>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+
+const DEFAULT_SETTINGS = {"adminPassword": "1234", "handwritingBrushWidth": 4, "handwritingBrushColor": "#0c1d3d", "handwritingBrushShape": "round", "indexTitle": "Digital Visitor's Book", "indexTitleFont": "Arial", "indexTitleSize": 36, "indexTitleColor": "#0b4fd7", "indexSubtitle": "Firebase online version for GitHub Pages", "indexBgColor": "#eaf4ff", "indexBgImage": "", "indexBoxColor": "#ffffff", "indexBoxImage": "", "indexBoxWidth": 680, "indexBoxTop": 0, "adminBtnText": "Admin / Start", "inputBtnText": "Open Input Screen", "screenBtnText": "Open Screen Display", "adminBtnX": 0, "adminBtnY": 0, "adminBtnWidth": 100, "adminBtnHeight": 60, "adminBtnColor": "#0b4fd7", "adminBtnImage": "", "adminBtnFont": "Arial", "adminBtnFontSize": 22, "adminBtnTextColor": "#ffffff", "inputBtnX": 0, "inputBtnY": 0, "inputBtnWidth": 100, "inputBtnHeight": 60, "inputBtnColor": "#7c3aed", "inputBtnImage": "", "inputBtnFont": "Arial", "inputBtnFontSize": 22, "inputBtnTextColor": "#ffffff", "screenBtnX": 0, "screenBtnY": 0, "screenBtnWidth": 100, "screenBtnHeight": 60, "screenBtnColor": "#209147", "screenBtnImage": "", "screenBtnFont": "Arial", "screenBtnFontSize": 22, "screenBtnTextColor": "#ffffff", "inputBgColor": "#eaf4ff", "inputBgImage": "", "inputHomeBoxColor": "#ffffff", "inputHomeBoxImage": "", "inputHomeTitle": "Digital Visitor's Book", "inputHomeHint": "Please choose one option.", "leaveBtnText": "Leave a Message", "videoBtnText": "Watch Video", "quizBtnText": "Play Quiz", "leaveBtnX": 0, "leaveBtnY": 0, "leaveBtnWidth": 48, "leaveBtnHeight": 88, "leaveBtnColor": "#0b4fd7", "leaveBtnImage": "", "leaveBtnFont": "Arial", "leaveBtnFontSize": 28, "leaveBtnTextColor": "#ffffff", "videoBtnX": 52, "videoBtnY": 0, "videoBtnWidth": 48, "videoBtnHeight": 88, "videoBtnColor": "#7c3aed", "videoBtnImage": "", "videoBtnFont": "Arial", "videoBtnFontSize": 28, "videoBtnTextColor": "#ffffff", "quizBtnX": 0, "quizBtnY": 108, "quizBtnWidth": 100, "quizBtnHeight": 88, "quizBtnColor": "#209147", "quizBtnImage": "", "quizBtnFont": "Arial", "quizBtnFontSize": 28, "quizBtnTextColor": "#ffffff", "messageTitle": "Digital Visitor's Book", "messageHint": "Please leave your name, organization, signature, and message.", "messageFormBoxColor": "#ffffff", "messageFormBoxImage": "", "homeButtonText": "Home", "fullscreenButtonText": "전체화면", "clearSigButtonText": "Clear Signature", "submitButtonText": "Submit Message", "homeBtnX": 0, "homeBtnY": 0, "homeBtnWidth": 90, "homeBtnHeight": 52, "homeBtnColor": "#e8eef8", "homeBtnImage": "", "homeBtnFont": "Arial", "homeBtnFontSize": 18, "homeBtnTextColor": "#17335f", "fullscreenBtnX": 100, "fullscreenBtnY": 0, "fullscreenBtnWidth": 130, "fullscreenBtnHeight": 52, "fullscreenBtnColor": "#17335f", "fullscreenBtnImage": "", "fullscreenBtnFont": "Arial", "fullscreenBtnFontSize": 18, "fullscreenBtnTextColor": "#ffffff", "clearSigBtnX": 0, "clearSigBtnY": 0, "clearSigBtnWidth": 180, "clearSigBtnHeight": 56, "clearSigBtnColor": "#e8eef8", "clearSigBtnImage": "", "clearSigBtnFont": "Arial", "clearSigBtnFontSize": 18, "clearSigBtnTextColor": "#17335f", "submitBtnX": 192, "submitBtnY": 0, "submitBtnWidth": 210, "submitBtnHeight": 56, "submitBtnColor": "#0b4fd7", "submitBtnImage": "", "submitBtnFont": "Arial", "submitBtnFontSize": 18, "submitBtnTextColor": "#ffffff", "videoUrl": "", "preloadVideo": "yes", "localVideoEnabled": "yes", "videoUrl2": "", "preloadVideo2": "yes", "localVideoEnabled2": "yes", "videoFadeInDuration": 0.8, "videoFadeOutDuration": 0.8, "videoAutoplayEnabled": "no", "videoAutoplayIntervalMin": 30, "video2AutoplayEnabled": "no", "video2AutoplayIntervalMin": 30, "videoSequentialAutoplayEnabled": "no", "videoSequentialAutoplayIntervalMin": 30, "quizTitle": "Play Quiz", "quizText": "Scan this QR code to participate in the quiz.", "quizQrImage": "", "quizWebsiteUrl": "", "screenTitle": "Welcome to the Republic of Korea booth at IAEA's 70th General Conference!", "screenSubtitle": "Your messages inspire us and the world to build a safer and better future through nuclear cooperation.", "screenTitleFont": "Arial", "screenTitleSize": 54, "screenTitleColor": "#08377d", "screenSubtitleFont": "Arial", "screenSubtitleSize": 26, "screenSubtitleColor": "#142855",  "screenTitleWeight": "800", "screenTitleAreaX": 3, "screenTitleAreaY": 24, "screenTitleAreaWidth": 94, "screenTitleAreaHeight": 78, "screenTitleAreaBgColor": "rgba(255,255,255,0)", "screenTitleAreaBgImage": "", "screenTitleAreaDottedBorder": "no", "screenTitleAreaBorderColor": "#8cb0dd", "screenTitleAreaBorderRadius": 0, "screenSubtitleWeight": "400", "screenSubtitleAreaX": 3, "screenSubtitleAreaY": 108, "screenSubtitleAreaWidth": 94, "screenSubtitleAreaHeight": 54, "screenSubtitleAreaBgColor": "rgba(255,255,255,0)", "screenSubtitleAreaBgImage": "", "screenSubtitleAreaDottedBorder": "no", "screenSubtitleAreaBorderColor": "#8cb0dd", "screenSubtitleAreaBorderRadius": 0, "visibleEntryCount": 6, "messageColorMode": "fixed", "messageFixedColor": "#0752c9", "messageRandomPalette": "#0752c9,#0b7a53,#c2410c,#7c3aed,#be123c,#0369a1,#a16207", "screenBgColor": "#eaf5ff", "screenBgImages": "", "screenBgInterval": 10, "screenBgFadeDuration": 1.5, "screenBgFadeInDuration": 1.5, "screenBgLocalEnabled": "yes", "scrollEnabled": "yes", "scrollSpeed": 18, "layoutMode": "vertical", "polaroidStackPhotoWidth": 260, "polaroidStackPhotoHeight": 260, "polaroidPhotoHeight": 60, "polaroidPhotoWidth": 60, "polaroidPhotoX": 50, "polaroidPerRow": 1, "vertical2ProfilePosition": "kakao", "largeBoxX": 2, "largeBoxY": 180, "largeBoxWidth": 96, "largeBoxHeight": 68, "largeBoxColor": "rgba(255,255,255,0.62)", "largeBoxImage": "", "largeBoxShadowEnabled": "yes", "entryBoxWidth": 100, "entryBoxHeight": 12, "entryGap": 8, "entryPaddingX": 14, "entryPaddingY": 12, "entryBoxColor": "rgba(255,255,255,0.86)", "entryBoxImage": "", "nameFont": "Arial", "nameSize": 23, "nameWeight": "800", "nameColor": "#071632", "orgFont": "Arial", "orgSize": 18, "orgWeight": "400", "orgColor": "#415276", "signatureFont": "Arial", "signatureSize": 14, "signatureWeight": "400", "signatureColor": "#071632", "messageFont": "Arial", "messageSize": 24, "messageWeight": "800", "messageColor": "#0752c9", "timeFont": "Arial", "timeSize": 18, "timeWeight": "400", "timeColor": "#1a2946", "randomZoneX": 5, "randomZoneY": 160, "randomZoneWidth": 90, "randomZoneHeight": 70, "randomZoneBoxEnabled": "no", "randomEntryWidth": 320, "randomEntryHeight": 160, "randomMemoFormat": "rounded", "randomEntryBgColor": "rgba(255,255,255,0.90)", "randomEntryBgImage": "", "randomEntryBorderRadius": 22, "randomEntryShadow": "yes", "randomEntryRotate": "yes", "randomKakaoProfileImage": "", "randomKakaoBubbleColor": "#FEE500", "randomKakaoBubbleColorMode": "fixed", "randomKakaoBubblePalette": "#FEE500,#ffffff,#dff3ff,#e8f5e9,#fff3cd,#fce7f3", "randomOverflowShuffleEnabled": "yes", "randomShuffleInterval": 12, "randomFadeEnabled": "yes", "randomFadeDuration": 1.2, "messageHandwritingEnabled": "no", "messageHandwritingBoxHeight": 620, "messageHandwritingBoxWidth": 900, "messageHandwritingBoxHeightPercent": 72, "messageHandwritingBoxWidthPercent": 86, "messageHandwritingBoxShape": "rounded", "messageHandwritingBoxBgColor": "#ffffff", "messageHandwritingBoxBgImage": "", "messageHandwritingBoxBorderRadius": 22, "messageHandwritingBoxBorderStyle": "dashed", "messageHandwritingBoxShadow": "yes", "screenHandwritingEntryWidth": 360, "screenHandwritingEntryHeight": 220, "randomZoneHeightPercent": 70, "boothSelfieAreaBgColor": "rgba(255,255,255,0)", "boothSelfieAreaBgImage": "", "boothSelfieAreaBorderRadius": 0, "boothSelfieQrEnabled": "yes", "boothSelfieQrX": 78, "boothSelfieQrY": 20, "boothSelfieQrSize": 150, "boothSelfieQrLabel": "Booth Selfie Upload", "boothSelfieAreaEnabled": "yes", "boothSelfieAreaX": 5, "boothSelfieAreaY": 72, "boothSelfieAreaWidth": 90, "boothSelfieAreaHeightPercent": 22, "boothSelfieLayout": "scroll", "boothSelfiePhotoWidth": 170, "boothSelfiePhotoHeight": 120, "boothSelfiePhotoRadius": 16, "boothSelfieVisibleCount": 12, "boothSelfieFadeEnabled": "yes", "boothSelfieFadeDuration": 1.0, "boothSelfieGap": 12, "boothSelfieScrollSpeed": 24, "contentScaleWithAreaEnabled": "yes", "boothSelfieOverflowShuffleEnabled": "yes", "boothSelfieShuffleInterval": 12, "boothSelfieRotate": "yes", "boothSelfiePhotoBoxBgColor": "rgba(255,255,255,0.94)", "boothSelfiePhotoBoxBgImage": "", "boothSelfiePhotoBoxPadding": 6};
+function mergedSettings(s){ return Object.assign({}, DEFAULT_SETTINGS, s || {}); }
+function safeCssUrl(url){ url=String(url||'').trim(); return url ? `url("${url.replace(/"/g, '%22')}")` : 'none'; }
+function bgStyle(color, image){ return image ? `${color} ${safeCssUrl(image)} center/cover no-repeat` : color; }
+function fontList(){return ['Arial','Helvetica','Georgia','Times New Roman','Trebuchet MS','Verdana','Courier New','Noto Sans KR','sans-serif'];}
+function normalizeUrl(url){ url=String(url||'').trim(); if(!url)return ''; if(!/^https?:\/\//i.test(url) && !url.startsWith('LOCAL')) url='https://'+url; return url; }
+
+function normalizePercentHeight(value, fallback, maxValue){
+ const n=Number(value);
+ const max=Number(maxValue||100);
+ if(!Number.isFinite(n)) return fallback;
+ const pct=n>100 ? (n/window.innerHeight*100) : n;
+ return Math.max(1,Math.min(max,pct));
+}
+function percentHeightCss(value, fallback){
+ return normalizePercentHeight(value, fallback, 100)+'vh';
+}
+
+
+if(typeof db==='undefined'){document.body.insertAdjacentHTML('afterbegin','<div style="position:fixed;inset:0;z-index:9999;background:white;color:#b91c1c;padding:30px;font:20px Arial">Firebase is not initialized. Please check firebase-config.js.</div>'); throw new Error('Firebase db is not defined');}
+const settingsRef=db.ref('visitorBook/settings'), entriesRef=db.ref('visitorBook/entries'), actionRef=db.ref('visitorBook/screenAction'), boothSelfiesRef=db.ref('visitorBook/boothSelfies');
+let settings=mergedSettings(), entries=[], boothSelfies=[], bgTimer=null, bgIndex=0, bgActiveLayer='A', ticker=null, selectedLocalVideoUrl='', selectedLocalVideoUrl2='', randomShuffleTimer=null, randomFadeTimer=null, boothSelfieTicker=null, selectedLocalBgUrls={1:'',2:'',3:'',4:'',5:'',6:'',7:'',8:'',9:'',10:''}, previousEntryKeys=null, incomingEntryTimer=null;
+let videoAutoTimer1=null, videoAutoTimer2=null, videoSeqTimer=null;
+settingsRef.on('value',snap=>{settings=mergedSettings(snap.val());applySettings();render();preloadAll();setupVideoAutoplay();});
+entriesRef.on('value',snap=>{const v=snap.val()||{};const nextEntries=Object.keys(v).map(k=>Object.assign({key:k},v[k]));handleEntriesUpdate(nextEntries);});
+function handleEntriesUpdate(nextEntries){
+ const nextKeys=nextEntries.map(e=>e.key);
+ const prevKeys=previousEntryKeys;
+ const isFirstLoad=(prevKeys===null);
+ // Only try the gentle single-card animation when: this isn't the very first load,
+ // we're in the scrolling "vertical2" guestbook layout, and downward scrolling is on.
+ // Any other situation (first load, layout change, entries removed, more than one
+ // new entry at once) falls back to the normal full re-render.
+ const canAnimateSingle=!isFirstLoad && settings && settings.layoutMode==='vertical2' && settings.scrollEnabled==='yes';
+ entries=nextEntries;
+ previousEntryKeys=nextKeys;
+ if(canAnimateSingle){
+  const prevSet=new Set(prevKeys);
+  const addedKeys=nextKeys.filter(k=>!prevSet.has(k));
+  const removedAny=prevKeys.some(k=>!nextKeys.includes(k));
+  if(addedKeys.length===1 && !removedAny){
+   const newest=nextEntries.find(e=>e.key===addedKeys[0]);
+   if(newest && newest.showOnScreen!==false){ announceNewEntry(newest); return; }
+  }
+ }
+ render();
+}
+function announceNewEntry(entry){
+ if(incomingEntryTimer){clearTimeout(incomingEntryTimer);incomingEntryTimer=null;}
+ const old=document.getElementById('incomingEntryOverlay');
+ if(old)old.remove();
+ const boxW=Math.max(240, largeBox.clientWidth || window.innerWidth*Number(settings.largeBoxWidth||96)/100);
+ const boxH=Math.max(160, largeBox.clientHeight || window.innerHeight*normalizePercentHeight(settings.largeBoxHeight,68,100)/100);
+ const dims=vertical2ScatterDims(entry);
+ const w=Math.min(dims.w, Math.max(120,boxW-24));
+ const h=Math.min(dims.h, Math.max(90,boxH-24));
+ const x=Math.max(0,(boxW-w)/2);
+ const overlay=document.createElement('div');
+ overlay.id='incomingEntryOverlay';
+ overlay.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;z-index:6;pointer-events:none;overflow:hidden;';
+ const card=document.createElement('div');
+ card.style.cssText=`position:absolute;left:${x}px;top:-${h+20}px;width:${w}px;transition:top .8s ease,opacity .8s ease;opacity:0;`;
+ card.innerHTML=vertical2EntryHtml(entry,0,false,{x:0,y:0,w,h,scale:1});
+ overlay.appendChild(card);
+ largeBox.appendChild(overlay);
+ requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+  card.style.top=Math.max(10,(boxH-h)/2)+'px';
+  card.style.opacity='1';
+ });});
+ const holdMs=Math.max(1200,Number(settings.newEntryAnnounceSeconds||3.2)*1000);
+ incomingEntryTimer=setTimeout(()=>{
+  card.style.transition='top .6s ease,opacity .6s ease';
+  card.style.top=(boxH+20)+'px';
+  card.style.opacity='0';
+  incomingEntryTimer=setTimeout(()=>{
+   const el=document.getElementById('incomingEntryOverlay');
+   if(el)el.remove();
+   mergeNewEntryIntoScroll(entry);
+  },620);
+ },holdMs);
+}
+boothSelfiesRef.on('value',snap=>{const v=snap.val()||{};boothSelfies=Object.keys(v).map(k=>Object.assign({key:k},v[k])).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));renderBoothSelfies();});
+
+function applyTitleBox(el, textEl, prefix, textValue, fallback){
+ const x=Number(settings[prefix+'AreaX'] ?? fallback.x);
+ const y=Number(settings[prefix+'AreaY'] ?? fallback.y);
+ const w=Number(settings[prefix+'AreaWidth'] ?? fallback.w);
+ const h=Number(settings[prefix+'AreaHeight'] ?? fallback.h);
+ el.style.left=x+'vw';
+ el.style.top=y+'px';
+ el.style.width=w+'vw';
+ el.style.height=h+'px';
+ el.style.background=bgStyle(settings[prefix+'AreaBgColor']||'rgba(255,255,255,0)', settings[prefix+'AreaBgImage']||'');
+ el.style.backgroundSize='cover';
+ el.style.backgroundPosition='center';
+ el.style.border=(settings[prefix+'AreaDottedBorder']==='yes')?`2px dashed ${settings[prefix+'AreaBorderColor']||'#8cb0dd'}`:'0';
+ el.style.borderRadius=(Number(settings[prefix+'AreaBorderRadius']||0)||0)+'px';
+ textEl.textContent=String(textValue||'');
+ textEl.style.fontFamily=settings[prefix+'Font']||'Arial';
+ textEl.style.fontSize=(Number(settings[prefix+'Size']||fallback.size)||fallback.size)+'px';
+ textEl.style.fontWeight=String(settings[prefix+'Weight']||fallback.weight);
+ textEl.style.color=settings[prefix+'Color']||fallback.color;
+}
+function applyScreenTitleAreas(){
+ applyTitleBox(screenMainTitleArea, screenTitle, 'screenTitle', settings.screenTitle, {x:3,y:24,w:94,h:78,size:54,weight:'800',color:'#08377d'});
+ applyTitleBox(screenSubtitleArea, screenSubtitle, 'screenSubtitle', settings.screenSubtitle, {x:3,y:108,w:94,h:54,size:26,weight:'400',color:'#142855'});
+}
+
+function resolveBgImageUrl(token){
+ const t=String(token||'').trim();
+ const m=t.match(/^LOCAL([1-9]|10)$/i);
+ if(m){
+  return selectedLocalBgUrls[m[1]]||'';
+ }
+ return t;
+}
+function applySettings(){
+ document.body.style.background=settings.screenBgColor;
+ const imgs=String(settings.screenBgImages||'').split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+ if(bgTimer)clearInterval(bgTimer);
+ const layerA=document.getElementById('bgLayerA'), layerB=document.getElementById('bgLayerB');
+ if(imgs.length){
+  const fadeOutSec=Math.max(0,Number(settings.screenBgFadeDuration ?? 1.5));
+  const fadeInSec=Math.max(0,Number(settings.screenBgFadeInDuration ?? fadeOutSec));
+  function setBg(){
+   const url=resolveBgImageUrl(imgs[bgIndex%imgs.length]); bgIndex++;
+   const nextLayer=bgActiveLayer==='A'?layerB:layerA, curLayer=bgActiveLayer==='A'?layerA:layerB;
+   if(!url)return;
+   nextLayer.style.transition=`opacity ${fadeInSec}s ease`;
+   curLayer.style.transition=`opacity ${fadeOutSec}s ease`;
+   nextLayer.style.backgroundImage=`url("${url}")`;
+   nextLayer.style.opacity='1';
+   curLayer.style.opacity='0';
+   bgActiveLayer=bgActiveLayer==='A'?'B':'A';
+  }
+  setBg();
+  bgTimer=setInterval(setBg,Math.max(1,Number(settings.screenBgInterval||10))*1000);
+ } else {
+  layerA.style.opacity='0'; layerB.style.opacity='0';
+ }
+ applyScreenTitleAreas();
+ applyConfiguredLargeBox();
+ localVideoPicker.style.display=settings.localVideoEnabled==='no'?'none':'block';
+ localVideoPicker2.style.display=settings.localVideoEnabled2==='no'?'none':'block';
+ localBgPicker.style.display=settings.screenBgLocalEnabled==='no'?'none':'block';
+ renderBoothSelfieQr();renderBoothSelfies();
+}
+function messageColor(i){if(settings.messageColorMode==='random'){const p=String(settings.messageRandomPalette||'').split(',').map(x=>x.trim()).filter(Boolean);return p.length?p[i%p.length]:settings.messageFixedColor}return settings.messageFixedColor;}
+function pctValue(v, fallback){const n=Number(v);return Number.isFinite(n)?Math.max(1,Math.min(100,n)):fallback;}
+function areaContentAutoScaleEnabled(){return String(settings.contentScaleWithAreaEnabled||'yes')==='yes';}
+function heightPercent(v,fallback){const n=Number(v);if(!Number.isFinite(n))return fallback;if(n>100)return Math.max(1,Math.min(100,n/window.innerHeight*100));return Math.max(1,Math.min(100,n));}
+function randomZoneHeightPx(){
+ const p=normalizePercentHeight(settings.randomZoneHeightPercent ?? settings.randomZoneHeight,70,100);
+ const top=Number(settings.randomZoneY||0);
+ const desired=window.innerHeight*p/100;
+ const available=Math.max(90,window.innerHeight-Math.max(0,top)-12);
+ return Math.max(90,Math.min(desired,available));
+}
+function applyConfiguredLargeBox(){
+ largeBox.style.left=settings.largeBoxX+'vw';
+ largeBox.style.top=settings.largeBoxY+'px';
+ largeBox.style.width=settings.largeBoxWidth+'vw';
+ largeBox.style.height=percentHeightCss(settings.largeBoxHeight,68);
+ largeBox.style.background=bgStyle(settings.largeBoxColor,settings.largeBoxImage);
+ largeBox.style.boxShadow=settings.largeBoxShadowEnabled==='no'?'none':'0 12px 34px rgba(60,100,160,.22)';
+ largeBox.style.borderRadius='22px';
+ largeBox.style.overflow='hidden';
+ largeBox.style.zIndex='1';
+ list.style.width='auto';
+ list.style.height='auto';
+}
+function applyRandomCanvasBox(){
+ largeBox.style.left='0';
+ largeBox.style.top='0';
+ largeBox.style.width='100vw';
+ largeBox.style.height='100dvh';
+ largeBox.style.background='transparent';
+ largeBox.style.boxShadow='none';
+ largeBox.style.borderRadius='0';
+ largeBox.style.overflow='visible';
+ largeBox.style.zIndex='3';
+ list.style.width='100vw';
+ list.style.height='100dvh';
+}
+function applyRandomZoneBox(){
+ const box=document.getElementById('randomZoneBox');
+ if(!box)return;
+ if(settings.layoutMode!=='random' || settings.randomZoneBoxEnabled!=='yes'){
+  box.style.display='none';
+  return;
+ }
+ box.style.display='block';
+ box.style.left=Number(settings.randomZoneX||5)+'vw';
+ box.style.top=Number(settings.randomZoneY||160)+'px';
+ box.style.width=Number(settings.randomZoneWidth||90)+'vw';
+ box.style.height=randomZoneHeightPx()+'px';
+ box.style.border='2px solid rgba(140,176,221,0.55)';
+ box.style.boxShadow='0 12px 34px rgba(60,100,160,.22)';
+ box.style.background='transparent';
+}
+function randomEntryBaseHeightPx(){const h=Number(settings.randomEntryHeight||160);return Math.max(70,Math.min(window.innerHeight*0.9,Number.isFinite(h)?h:160));}
+function screenHandwritingWidthPx(){const w=Number(settings.screenHandwritingEntryWidth||settings.randomEntryWidth||360);return Math.max(120,Math.min(window.innerWidth*0.95,Number.isFinite(w)?w:360));}
+function screenHandwritingHeightPx(){const h=Number(settings.screenHandwritingEntryHeight||settings.randomEntryHeight||220);return Math.max(80,Math.min(window.innerHeight*0.95,Number.isFinite(h)?h:220));}
+function handwritingBoxStyle(){const shape=String(settings.messageHandwritingBoxShape||'rounded');const radius=shape==='square'?0:(shape==='pill'?999:Number(settings.messageHandwritingBoxBorderRadius||22));const border=(shape==='none'||settings.messageHandwritingBoxBorderStyle==='none')?'0':('2px '+(settings.messageHandwritingBoxBorderStyle||'dashed')+' #8cb0dd');const shadow=settings.messageHandwritingBoxShadow==='no'?'none':'0 10px 28px rgba(20,40,80,.18)';return `border:${border};border-radius:${radius}px;box-shadow:${shadow};background:${bgStyle(settings.messageHandwritingBoxBgColor||settings.randomEntryBgColor||'#fff',settings.messageHandwritingBoxBgImage||settings.randomEntryBgImage||'')}`;}
+function randomFormatStyle(i){
+ const fmt=String(settings.randomMemoFormat||'rounded');
+ const radius=Number(settings.randomEntryBorderRadius||22);
+ const shadow=settings.randomEntryShadow==='no'?'none':'0 12px 30px rgba(20,40,80,.22)';
+ const rotate=settings.randomEntryRotate==='no'?0:((i%5)-2)*1.2;
+ const memoBg=bgStyle(settings.randomEntryBgColor||settings.entryBoxColor||'rgba(255,255,255,0.90)', settings.randomEntryBgImage||settings.entryBoxImage||'');
+ let extra=`border:0!important;outline:0!important;border-radius:${radius}px;box-shadow:${shadow};transform:rotate(${rotate}deg);background:${memoBg};`;
+ if(fmt==='kakao') extra+='background:transparent!important;box-shadow:none;transform:none;';
+ return extra;
+}
+function estimateRandomDimensions(e){
+ const baseW=Number(settings.randomEntryWidth||320);
+ const baseH=randomEntryBaseHeightPx();
+ const zoneW=Math.max(240,window.innerWidth*Number(settings.randomZoneWidth||90)/100);
+ const zoneH=randomZoneHeightPx();
+ const safe=24;
+ if(e.messageMode==='handwriting'&&e.messageImage){
+  const hwW=screenHandwritingWidthPx();
+  const hwH=screenHandwritingHeightPx();
+  return {w:Math.min(zoneW-safe,Math.max(120,hwW)),h:Math.min(zoneH-safe,Math.max(80,hwH))};
+ }
+ const msg=String(e.message||'');
+ const msgLen=msg.length;
+ let fmt=String(settings.randomMemoFormat||'rounded');
+ if(!['rounded','kakao'].includes(fmt)) fmt='rounded';
+ const fontSize=Number(settings.messageSize||24);
+ const minW=Math.max(260,baseW);
+ const maxW=Math.max(minW,zoneW-safe);
+ const desiredW=fmt==='kakao' ? baseW+Math.min(520,msgLen*6) : baseW+Math.min(720,msgLen*7.5);
+ const autoW=Math.min(maxW,Math.max(minW,desiredW));
+ const sideReserve=fmt==='kakao'?95:130;
+ const charsPerLine=Math.max(6,Math.floor((autoW-sideReserve)/(fontSize*0.50)));
+ const lines=Math.max(1,Math.ceil(msgLen/charsPerLine));
+ const metaExtra=fmt==='kakao'?100:125;
+ const autoH=Math.min(zoneH-safe,Math.max(baseH,metaExtra+lines*fontSize*1.45));
+ return {w:Math.ceil(autoW),h:Math.ceil(autoH)};
+}
+function randomPositions(items, requireFullSize=false){
+ const n=Array.isArray(items)?items.length:Number(items||0);
+ if(n<=0)return [];
+ const left0=window.innerWidth*Number(settings.randomZoneX||5)/100;
+ const top0=Number(settings.randomZoneY||160);
+ const zoneW=Math.max(220,window.innerWidth*Number(settings.randomZoneWidth||90)/100);
+ const zoneH=randomZoneHeightPx();
+ const rotateOn=settings.randomEntryRotate!=='no';
+ const safeGap=rotateOn?42:24;
+ const rawDims=(Array.isArray(items)?items.map(estimateRandomDimensions):Array.from({length:n},()=>({w:Number(settings.randomEntryWidth||320),h:randomEntryBaseHeightPx()})));
+ const dims=rawDims.map(d=>({w:Math.min(Math.max(120,d.w),zoneW-safeGap),h:Math.min(Math.max(90,d.h),zoneH-safeGap)}));
+ let best={cols:1,scale:0,cellW:zoneW,cellH:zoneH/n};
+ for(let cols=1;cols<=n;cols++){
+  const rows=Math.ceil(n/cols);
+  const cellW=zoneW/cols;
+  const cellH=zoneH/rows;
+  let scale=1;
+  for(const d of dims){scale=Math.min(scale,(cellW-safeGap)/d.w,(cellH-safeGap)/d.h);}
+  if(scale>best.scale)best={cols,scale,cellW,cellH};
+ }
+ const autoScale=areaContentAutoScaleEnabled();
+ if(requireFullSize && best.scale<1 && !autoScale)return null;
+ const cols=best.cols;
+ const rows=Math.ceil(n/cols);
+ const cellW=zoneW/cols;
+ const cellH=zoneH/rows;
+ const scale=autoScale?Math.max(0.18,Math.min(1,best.scale)):(requireFullSize?1:Math.max(0.72,Math.min(1,best.scale)));
+ const positions=[];
+ for(let i=0;i<n;i++){
+  const d=dims[i];
+  const w=Math.max(120,Math.min(zoneW-safeGap,Math.floor(d.w*scale)));
+  const h=Math.max(90,Math.min(zoneH-safeGap,Math.floor(d.h*scale)));
+  const col=i%cols,row=Math.floor(i/cols);
+  const cellX=left0+col*cellW;
+  const cellY=top0+row*cellH;
+  const freeX=Math.max(0,cellW-w-safeGap);
+  const freeY=Math.max(0,cellH-h-safeGap);
+  const rx=Math.abs(Math.sin((i+1)*12.9898))*freeX;
+  const ry=Math.abs(Math.cos((i+1)*78.233))*freeY;
+  const x=Math.min(left0+zoneW-w-safeGap/2,Math.max(left0+safeGap/2,cellX+safeGap/2+rx));
+  const y=Math.min(top0+zoneH-h-safeGap/2,Math.max(top0+safeGap/2,cellY+safeGap/2+ry));
+  positions.push({x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),scale});
+ }
+ return positions;
+}
+function getFittingRandomSet(data, requested){
+ const max=Math.min(data.length,requested,100);
+ if(areaContentAutoScaleEnabled()){
+  const subset=data.slice(0,max);
+  return {items:subset,positions:randomPositions(subset,true)||randomPositions(subset,false)};
+ }
+ for(let count=max;count>=1;count--){
+  const subset=data.slice(0,count);
+  const positions=randomPositions(subset,true);
+  if(positions)return {items:subset,positions};
+ }
+ const one=data.slice(0,1);
+ return {items:one,positions:randomPositions(one,false)};
+}
+function initials(name){const t=String(name||'').trim();return t?t.slice(0,1).toUpperCase():'?'}
+function kakaoBubbleColor(i){
+ const mode=String(settings.randomKakaoBubbleColorMode||'fixed');
+ if(mode==='random'){
+  const p=String(settings.randomKakaoBubblePalette||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(p.length)return p[i%p.length];
+ }
+ return settings.randomKakaoBubbleColor||'#FEE500';
+}
+function messageContentHtml(e,i,isKakao=false,scale=1,maxLines=null){
+ if(e.messageImage){
+  const full=e.messageMode==='handwriting';
+  return `<img class="handwrittenMessage" src="${e.messageImage}" alt="Handwritten message" style="width:100%;height:${full?'100%':'auto'};max-height:${full?'none':'220px'};object-fit:contain;display:block;background:transparent;border-radius:0;padding:0">`;
+ }
+ const color=isKakao?'#111':messageColor(i);
+ const clip=(maxLines&&maxLines>0)?`display:-webkit-box;-webkit-line-clamp:${maxLines};-webkit-box-orient:vertical;overflow:hidden;`:`overflow:visible;`;
+ return `<div class="message" style="font-family:${settings.messageFont};font-size:${Math.max(12,(isKakao?Math.max(14,Number(settings.messageSize||24)-4):Number(settings.messageSize||24))*scale)}px;font-weight:${settings.messageWeight};color:${color};line-height:1.25;white-space:normal;word-break:break-word;overflow-wrap:anywhere;${clip}">${escapeHtml(e.message)}</div>`;
+}
+function estimateEntryHeight(e,random=false){
+ const base=random?randomEntryBaseHeightPx():Math.max(70,window.innerHeight*normalizePercentHeight(settings.entryBoxHeight,12,40)/100);
+ const msgLen=String(e.message||'').length;
+ const charsPerLine=random?32:55;
+ if(e.messageMode==='handwriting'&&e.messageImage){return Math.max(base,screenHandwritingHeightPx());}
+ const imageExtra=e.messageImage?(random?120:170):0;
+ const approxLines=Math.max(1,Math.ceil(msgLen/charsPerLine));
+ const textExtra=Math.max(0,approxLines-2)*Math.max(20,Number(settings.messageSize||24)*1.2);
+ let vertical2Extra=0;
+ if(!random && settings.layoutMode==='vertical2'){
+  const hasOwnPhoto=!!String(e.profileImage||'').trim();
+  const photoH=hasOwnPhoto?Math.max(20,Number(settings.polaroidPhotoHeight||220)):60;
+  const posMode=hasOwnPhoto?String(settings.vertical2ProfilePosition||'kakao'):'kakao';
+  vertical2Extra=posMode==='polaroid'?(photoH+50):Math.max(0,photoH-base);
+ }
+ return Math.max(base, base+textExtra+imageExtra+vertical2Extra);
+}
+// Renders one guestbook entry for the new "verticalPolaroid" layout (a plain, single-
+// column scrolling stack). An entry with its own QR-uploaded photo gets a classic
+// polaroid-photo card (photo up top, visitor details written below it); an entry with
+// no photo of its own gets a yellow sticky-note card with all the same details instead.
+function polaroidStackEntryHtml(e,i){
+ const hasOwnPhoto=!!String(e.profileImage||'').trim();
+ const widthPct=Math.max(10,Math.min(100,Number(settings.entryBoxWidth||100)));
+ const gap=Math.max(0,Number(settings.entryGap||8));
+ const nameHtml=`<div class="name" style="font-family:${settings.nameFont};font-size:${settings.nameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor};margin-bottom:4px">${escapeHtml(e.name)}</div>`;
+ const orgHtml=`<div class="org" style="font-family:${settings.orgFont};font-size:${settings.orgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor};margin-bottom:8px">${escapeHtml(e.organization)}</div>`;
+ const msgHtml=messageContentHtml(e,i,false,1);
+ const sigHtml=e.signature?`<div class="signature" style="text-align:right;margin-top:10px"><img src="${e.signature}" alt="signature" style="max-height:${Math.max(28,Number(settings.signatureSize||14)*2.4)}px;max-width:55%;object-fit:contain"></div>`:'';
+ if(hasOwnPhoto){
+  const photoW=Math.max(60,Number(settings.polaroidStackPhotoWidth||260));
+  const photoH=Math.max(60,Number(settings.polaroidStackPhotoHeight||260));
+  const photoUrl=String(e.profileImage||'').trim().replace(/"/g,'%22');
+  return `<article class="entry polaroidStackEntry" style="width:${widthPct}%;margin:0 auto ${gap}px auto;padding:0;background:transparent;overflow:visible;display:flex;flex-direction:column;align-items:center">`+
+   `<div style="background:#fff;padding:16px 16px 54px 16px;border-radius:2px;box-shadow:0 10px 26px rgba(0,0,0,.22);display:inline-block">`+
+   `<div style="width:${photoW}px;height:${photoH}px;max-width:100%;background:#111;overflow:hidden">`+
+   `<img src="${photoUrl}" alt="profile" style="width:100%;height:100%;object-fit:cover;display:block">`+
+   `</div></div>`+
+   `<div style="width:100%;max-width:${photoW+40}px;margin-top:16px;text-align:left">${nameHtml}${orgHtml}${msgHtml}${sigHtml}</div>`+
+   `</article>`;
+ }
+ // Sticky-note style for entries without their own QR-uploaded photo — a gentle,
+ // deterministic tilt (based on the entry's index) gives each note a natural,
+ // hand-placed feel without any two notes rotating in exactly the same way.
+ const tilt=(((i*37)%7)-3);
+ return `<article class="entry polaroidStackEntry stickyNoteEntry" style="width:${widthPct}%;margin:0 auto ${gap+10}px auto;padding:22px 22px 18px 22px;background:linear-gradient(160deg,#fff9a8,#fef08a);box-shadow:0 8px 20px rgba(0,0,0,.18);transform:rotate(${tilt}deg);text-align:left;display:block;overflow:visible">${nameHtml}${orgHtml}${msgHtml}${sigHtml}</article>`;
+}
+function entryHtml(e,i,random=false,pos=null,rowMode=false){
+ const randomBgColor=settings.randomEntryBgColor||settings.entryBoxColor;
+ const randomBgImage=settings.randomEntryBgImage||settings.entryBoxImage;
+ let fmt=String(settings.randomMemoFormat||'rounded');
+ if(!['rounded','kakao'].includes(fmt)) fmt='rounded';
+ const isKakao=random&&fmt==='kakao';
+ const style=random&&pos?`position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.w}px;height:${pos.h}px;padding:${isKakao?8:settings.entryPaddingY}px ${isKakao?8:settings.entryPaddingX}px;${isKakao?'border-radius:18px;box-shadow:none;transform:none;background:transparent!important;display:block;':randomFormatStyle(i)}`:(rowMode?`flex:1 1 0;min-width:0;min-height:${estimateEntryHeight(e,false)}px;height:auto;padding:${settings.entryPaddingY}px ${settings.entryPaddingX}px;`:`width:${settings.entryBoxWidth}%;min-height:${estimateEntryHeight(e,false)}px;height:auto;margin-bottom:${settings.entryGap}px;padding:${settings.entryPaddingY}px ${settings.entryPaddingX}px;`);
+ const bg=random?bgStyle(randomBgColor,randomBgImage):bgStyle(settings.entryBoxColor,settings.entryBoxImage);
+ if(e.messageMode==='handwriting'&&e.messageImage){
+  return `<article class="entry randomEntry handwritingEntry" style="${style}${handwritingBoxStyle()};display:block;overflow:hidden">${messageContentHtml(e,i,false,pos&&pos.scale?pos.scale:1)}</article>`;
+ }
+ if(isKakao){
+  const bubbleColor=kakaoBubbleColor(i);
+  const profileImage=String(e.profileImage||settings.randomKakaoProfileImage||'').trim();
+  const profile=profileImage?`<img src="${profileImage.replace(/"/g,'%22')}" alt="profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`<span style="display:grid;place-items:center;width:100%;height:100%;font-weight:900;color:#333;font-size:22px">${escapeHtml(initials(e.name))}</span>`;
+  return `<article class="entry randomEntry kakaoEntry" style="${style}"><div style="display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:start;width:100%;height:100%"><div style="width:48px;height:48px;border-radius:50%;background:#d9d9d9;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)">${profile}</div><div style="min-width:0"><div class="name" style="font-family:${settings.nameFont};font-size:${Math.max(13,Number(settings.nameSize||23)-5)}px;font-weight:${settings.nameWeight};color:${settings.nameColor};margin-bottom:5px">${escapeHtml(e.name)}</div><div style="position:relative;background:${bubbleColor};border-radius:4px 16px 16px 16px;padding:12px 14px;min-height:${Math.max(54,(pos?pos.h:160)-86)}px;box-shadow:0 3px 10px rgba(0,0,0,.10)"><div class="org" style="font-family:${settings.orgFont};font-size:${Math.max(11,Number(settings.orgSize||18)-4)}px;font-weight:${settings.orgWeight};color:${settings.orgColor};margin-bottom:5px">${escapeHtml(e.organization)}</div>${messageContentHtml(e,i,true,pos&&pos.scale?pos.scale:1)}<div class="time" style="text-align:right;margin-top:8px;font-family:${settings.timeFont};font-size:${Math.max(10,Number(settings.timeSize||18)-5)}px;font-weight:${settings.timeWeight};color:#665c00">${fmtTime(e.createdAt)}</div></div></div></div></article>`;
+ }
+ if(random){
+  const sc=pos&&pos.scale?pos.scale:1;
+  const randomNameSize=Math.max(12,Number(settings.nameSize||23)*sc);
+  const randomOrgSize=Math.max(10,Number(settings.orgSize||18)*sc);
+  const randomTimeSize=Math.max(10,Number(settings.timeSize||18)*sc);
+  return `<article class="entry randomEntry" style="${style}background:${bg};display:flex!important;flex-direction:column;gap:6px;overflow:hidden;align-items:stretch"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-height:0"><div style="min-width:0;flex:1"><div class="name" style="font-family:${settings.nameFont};font-size:${randomNameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor};line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.name)}</div><div class="org" style="font-family:${settings.orgFont};font-size:${randomOrgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor};line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.organization)}</div></div><div class="time" style="font-family:${settings.timeFont};font-size:${randomTimeSize}px;font-weight:${settings.timeWeight};color:${settings.timeColor};white-space:nowrap;flex:0 0 auto">${fmtTime(e.createdAt)}</div></div><div style="flex:1;min-height:0;display:block;overflow:visible">${messageContentHtml(e,i,false,sc)}</div>${e.signature?`<div class="signature" style="height:36px;text-align:right"><img src="${e.signature}" style="max-height:34px;max-width:42%;object-fit:contain"></div>`:''}</article>`;
+ }
+ if(!random && settings.layoutMode==='vertical2'){
+  return vertical2EntryHtml(e,i,rowMode);
+ }
+ return `<article class="entry" style="${style}background:${bg}"><div><div class="name" style="font-family:${settings.nameFont};font-size:${settings.nameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor}">${escapeHtml(e.name)}</div><div class="org" style="font-family:${settings.orgFont};font-size:${settings.orgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor}">${escapeHtml(e.organization)}</div></div><div class="signature" style="font-family:${settings.signatureFont};font-size:${settings.signatureSize}px;font-weight:${settings.signatureWeight};color:${settings.signatureColor}"><img src="${e.signature||''}"></div>${messageContentHtml(e,i,false,pos&&pos.scale?pos.scale:1)}<div class="time" style="font-family:${settings.timeFont};font-size:${settings.timeSize}px;font-weight:${settings.timeWeight};color:${settings.timeColor}">${fmtTime(e.createdAt)}</div></article>`}
+// In the vertical2 (scrolling guestbook) layout, the entry's date/time text is replaced
+// with the visitor's handwritten signature image instead — the signature is the more
+// meaningful, personal element to show on the big screen than a timestamp.
+function vertical2SignatureBoxHtml(e,timeSizePx){
+ const h=Math.max(20,Math.round(timeSizePx*2.1));
+ const img=e.signature?`<img src="${e.signature}" alt="signature" style="max-height:100%;max-width:60%;object-fit:contain;vertical-align:bottom">`:'';
+ return `<div class="signature" style="text-align:right;margin-top:8px;height:${h}px;line-height:${h}px">${img}</div>`;
+}
+function vertical2EntryHtml(e,i,rowMode=false,pos=null){
+ const ownPhoto=String(e.profileImage||'').trim();
+ const fallbackPhoto=String(settings.randomKakaoProfileImage||'').trim();
+ const hasOwnPhoto=!!ownPhoto;
+ const profileImage=ownPhoto||fallbackPhoto;
+ const posMode=hasOwnPhoto?String(settings.vertical2ProfilePosition||'kakao'):'kakao';
+ const isPolaroid=posMode==='polaroid';
+ const scale=(pos&&pos.scale)?pos.scale:1;
+ let photoW=Math.max(20,(hasOwnPhoto?Number(settings.polaroidPhotoWidth||220):60)*scale);
+ let photoH=Math.max(20,(hasOwnPhoto?Number(settings.polaroidPhotoHeight||220):60)*scale);
+ const bubbleColor=kakaoBubbleColor(i);
+ const outerPadV=Math.max(6,Math.round(Number(settings.entryPaddingY||12)*scale));
+ const outerPadH=Math.max(6,Math.round(Number(settings.entryPaddingX||14)*scale));
+ // In scatter mode (pos provided) the box gets a HARD fixed size with overflow hidden,
+ // so a message can never spill into (and visually overlap) a neighboring entry. The
+ // height estimate that produced pos.h (see vertical2ScatterDims) is now generous and
+ // geometry-accurate, so this safety clip should rarely if ever actually cut text off.
+ const baseStyle=pos
+  ? `position:absolute;left:${pos.x}px;top:${pos.y}px;width:${pos.w}px;height:${pos.h}px;overflow:hidden;padding:${outerPadV}px ${outerPadH}px;`
+  : (rowMode?`flex:1 1 0;min-width:0;min-height:${estimateEntryHeight(e,false)}px;height:auto;padding:${settings.entryPaddingY}px ${settings.entryPaddingX}px;`:`width:${settings.entryBoxWidth}%;min-height:${estimateEntryHeight(e,false)}px;height:auto;margin-bottom:${settings.entryGap}px;padding:${settings.entryPaddingY}px ${settings.entryPaddingX}px;`);
+ const innerW=pos?Math.max(30,pos.w-2*outerPadH):null;
+ const innerH=pos?Math.max(30,pos.h-2*outerPadV):null;
+ const nameSize=Math.max(11,Math.round(Number(settings.nameSize||23)*scale));
+ const orgSize=Math.max(10,Math.round((Number(settings.orgSize||18)-4)*scale));
+ const timeSize=Math.max(9,Math.round((Number(settings.timeSize||18)-5)*scale));
+ const bubblePadV=Math.max(6,Math.round(12*scale)), bubblePadH=Math.max(6,Math.round(14*scale));
+ const msgFontSize=Math.max(12,Math.max(14,Number(settings.messageSize||24)-4)*scale);
+ if(pos){
+  // The box (pos.w/pos.h) was already sized in vertical2ScatterDims to fit the message
+  // content plus a small fixed photo slot — NOT the admin's configured photo width or
+  // height directly (for either style now) — so both styles stay compact enough to
+  // reliably show 7~9 entries per page. The photo is simply scaled/cropped here to fit
+  // that fixed slot, however large the admin's configured photo size setting is.
+  if(isPolaroid){
+   photoW=Math.min(photoW, innerW);
+   photoH=Math.min(photoH, Math.max(24, Math.round(70*scale)));
+  } else {
+   photoW=Math.min(photoW, Math.max(24, innerW-40*scale));
+   photoH=Math.min(photoH, innerH);
+  }
+ }
+ if(isPolaroid){
+  // 성명을 메시지 박스(말풍선) 내부 상단에 기관과 나란히 표시
+  const photoBox=profileImage?`<img src="${profileImage.replace(/"/g,'%22')}" alt="profile" style="width:100%;height:100%;object-fit:cover;display:block">`:`<span style="display:grid;place-items:center;width:100%;height:100%;font-weight:900;color:#333;font-size:${Math.max(14,Math.min(photoW,photoH)*0.3)}px;background:#e5e7eb">${escapeHtml(initials(e.name))}</span>`;
+  const photoXPct=Math.max(0,Math.min(100,Number(settings.polaroidPhotoX ?? 50)));
+  const photoMarginLeft=`calc((100% - ${Math.round(photoW)}px) * ${(photoXPct/100).toFixed(3)})`;
+  let maxLines=null;
+  if(pos){
+   const reserved=bubblePadV*2+(nameSize*1.25+6)+Math.max(20,Math.round(timeSize*2.1))+Math.round(14*scale);
+   const availForMsg=Math.max(0, innerH-photoH-Math.round(6*scale)-reserved);
+   maxLines=Math.max(1,Math.min(24,Math.floor(availForMsg/(msgFontSize*1.3))));
+  }
+  const bubble=`<div style="position:relative;background:${bubbleColor};border-radius:4px 16px 16px 16px;padding:${bubblePadV}px ${bubblePadH}px;box-shadow:0 3px 10px rgba(0,0,0,.10);overflow:hidden;height:100%;box-sizing:border-box">${nameOrgRowHtml(e,nameSize,orgSize)}${messageContentHtml(e,i,true,scale,maxLines)}${vertical2SignatureBoxHtml(e,timeSize)}</div>`;
+  return `<article class="entry vertical2Entry" style="${baseStyle}background:transparent!important;box-shadow:none;display:flex;flex-direction:column;gap:6px;align-items:stretch">`+
+   `<div style="width:${photoW}px;height:${photoH}px;max-width:100%;flex:0 0 auto;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.18);background:#fff;margin-left:${photoMarginLeft};margin-right:0">${photoBox}</div>`+
+   `<div style="flex:1 1 auto;min-height:0;overflow:hidden">${bubble}</div>`+
+   `</article>`;
+ }
+ const avatarRadius=photoW===photoH?'50%':'14px';
+ const profile=profileImage?`<img src="${profileImage.replace(/"/g,'%22')}" alt="profile" style="width:100%;height:100%;object-fit:cover;border-radius:${avatarRadius}">`:`<span style="display:grid;place-items:center;width:100%;height:100%;font-weight:900;color:#333;font-size:${Math.max(14,Math.min(photoW,photoH)*0.4)}px">${escapeHtml(initials(e.name))}</span>`;
+ let maxLinesAvatar=null;
+ if(pos){
+  const reservedAvatar=(nameSize*1.25+5)+bubblePadV*2+(orgSize*1.3+5)+Math.max(20,Math.round(timeSize*2.1))+Math.round(14*scale);
+  const availForMsg=Math.max(0, innerH-reservedAvatar);
+  maxLinesAvatar=Math.max(1,Math.min(24,Math.floor(availForMsg/(msgFontSize*1.3))));
+ }
+ const bubbleAvatar=`<div style="position:relative;background:${bubbleColor};border-radius:4px 16px 16px 16px;padding:${bubblePadV}px ${bubblePadH}px;box-shadow:0 3px 10px rgba(0,0,0,.10);overflow:hidden"><div class="org" style="font-family:${settings.orgFont};font-size:${orgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor};margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.organization)}</div>${messageContentHtml(e,i,true,scale,maxLinesAvatar)}${vertical2SignatureBoxHtml(e,timeSize)}</div>`;
+ return `<article class="entry vertical2Entry" style="${baseStyle}background:transparent!important;box-shadow:none;display:block">`+
+  `<div style="display:grid;grid-template-columns:${photoW}px 1fr;gap:10px;align-items:start;width:100%;height:100%">`+
+  `<div style="width:${photoW}px;height:${photoH}px;border-radius:${avatarRadius};background:#d9d9d9;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)">${profile}</div>`+
+  `<div style="min-width:0;min-height:0;overflow:hidden;height:100%"><div class="name" style="font-family:${settings.nameFont};font-size:${nameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor};margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.name)}</div>${bubbleAvatar}</div>`+
+  `</div></article>`;
+}
+function nameOrgRowHtml(e,nameSize,orgSize){
+ return `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:5px;flex-wrap:wrap;overflow:hidden"><span class="name" style="font-family:${settings.nameFont};font-size:${nameSize}px;font-weight:${settings.nameWeight};color:${settings.nameColor};white-space:nowrap">${escapeHtml(e.name)}</span><span class="org" style="font-family:${settings.orgFont};font-size:${orgSize}px;font-weight:${settings.orgWeight};color:${settings.orgColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.organization)}</span></div>`;
+}
+function bestFitScale(dims, zoneW, zoneH){
+ const n=dims.length;
+ const safeGap=28;
+ let best={cols:1,scale:0,cellW:zoneW,cellH:n?zoneH/n:zoneH};
+ if(n<=0) return {cols:1,scale:1,cellW:zoneW,cellH:zoneH};
+ for(let cols=1;cols<=n;cols++){
+  const rows=Math.ceil(n/cols);
+  const cellW=zoneW/cols, cellH=zoneH/rows;
+  let scale=1;
+  for(const dRaw of dims){
+   const d={w:Math.min(Math.max(140,dRaw.w),Math.max(140,zoneW-safeGap)),h:Math.min(Math.max(80,dRaw.h),Math.max(80,zoneH-safeGap))};
+   scale=Math.min(scale,(cellW-safeGap)/d.w,(cellH-safeGap)/d.h);
+  }
+  if(scale>best.scale)best={cols,scale,cellW,cellH};
+ }
+ return best;
+}
+function assignPositions(dims, zoneW, zoneH, best, scaleCap){
+ const n=dims.length;
+ if(n<=0)return [];
+ const safeGap=28;
+ const cols=best.cols, rows=Math.ceil(n/cols);
+ const cellW=zoneW/cols, cellH=zoneH/rows;
+ // scaleCap lets a caller pin the render scale to exactly 1 (natural size) when it has
+ // already confirmed items fit at that size; a tiny floor (0.15) only kicks in for a
+ // pathological single item that's simply bigger than the whole box.
+ const scale=Math.max(0.15, Math.min(scaleCap, best.scale));
+ const positions=[];
+ for(let i=0;i<n;i++){
+  const dRaw=dims[i];
+  const d={w:Math.min(Math.max(140,dRaw.w),Math.max(140,zoneW-safeGap)),h:Math.min(Math.max(80,dRaw.h),Math.max(80,zoneH-safeGap))};
+  // Each item is sized+placed strictly within its own grid cell (minus safeGap on all
+  // sides), so items can never overlap regardless of the jitter offset below.
+  const w=Math.max(110,Math.min(cellW-safeGap,Math.floor(d.w*scale)));
+  const h=Math.max(70,Math.min(cellH-safeGap,Math.floor(d.h*scale)));
+  const col=i%cols,row=Math.floor(i/cols);
+  const cellX=col*cellW, cellY=row*cellH;
+  const freeX=Math.max(0,cellW-w-safeGap), freeY=Math.max(0,cellH-h-safeGap);
+  const rx=Math.abs(Math.sin((i+7)*12.9898))*freeX;
+  const ry=Math.abs(Math.cos((i+7)*78.233))*freeY;
+  const x=Math.min(zoneW-w-safeGap/2,Math.max(safeGap/2,cellX+safeGap/2+rx));
+  const y=Math.min(zoneH-h-safeGap/2,Math.max(safeGap/2,cellY+safeGap/2+ry));
+  positions.push({x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),scale});
+ }
+ return positions;
+}
+function vertical2EstimateLines(msg, colWidthPx, msgFontSizePx){
+ const s=String(msg||'');
+ const msgLen=s.length;
+ if(msgLen<=0) return 1;
+ // IMPORTANT: this is a Korean-language guestbook. Hangul syllable blocks (and other
+ // CJK/full-width characters) render nearly a full em wide — much wider than Latin
+ // letters/digits (~0.55em). The previous flat 0.52em-per-character assumption badly
+ // UNDER-estimated the number of wrapped lines for Korean text, which made the box too
+ // short and caused real messages to get clipped. We now measure the actual mix of
+ // wide vs narrow characters in this message and weight the average character width
+ // accordingly.
+ let wideCount=0;
+ for(const ch of s){
+  const c=ch.codePointAt(0);
+  const isWide=(c>=0x1100&&c<=0x11FF)||(c>=0x3130&&c<=0x318F)||(c>=0xAC00&&c<=0xD7A3)||(c>=0x3040&&c<=0x30FF)||(c>=0x4E00&&c<=0x9FFF)||(c>=0xFF00&&c<=0xFFEF);
+  if(isWide) wideCount++;
+ }
+ const narrowCount=msgLen-wideCount;
+ const avgCharWidthEm=(wideCount*0.98+narrowCount*0.55)/msgLen;
+ const charWidthPx=Math.max(6, avgCharWidthEm*msgFontSizePx);
+ const charsPerLine=Math.max(4, Math.floor(Math.max(40,colWidthPx)/charWidthPx));
+ let lines=Math.ceil(msgLen/charsPerLine);
+ // Extra safety buffer: word-wrap boundaries, spaces and punctuation mean a real line
+ // usually holds a bit less than a flat average suggests, so pad multi-line estimates
+ // by one more line rather than risk clipping.
+ if(lines>=2) lines+=1;
+ return Math.max(1, lines);
+}
+function vertical2ScatterDims(e){
+ const msg=String(e.message||'');
+ const msgLen=msg.length;
+ const baseW=Math.max(220,Number(settings.randomEntryWidth||320));
+ // NOTE: width is intentionally flat (not stretched by message length) — the accurate
+ // per-character line estimate below already makes the box grow TALLER for longer
+ // messages, so growing the box WIDER too just wasted space and made it much harder to
+ // fit 7-9 entries per page. A stable width also packs far more predictably.
+ let w=baseW;
+ const hasOwnPhoto=!!String(e.profileImage||'').trim();
+ const posMode=hasOwnPhoto?String(settings.vertical2ProfilePosition||'kakao'):'kakao';
+ const isPolaroid=posMode==='polaroid';
+ const photoW=hasOwnPhoto?Math.max(20,Number(settings.polaroidPhotoWidth||220)):60;
+ const photoH=hasOwnPhoto?Math.max(20,Number(settings.polaroidPhotoHeight||220)):60;
+ const bubblePadV=12, bubblePadH=14;
+ // IMPORTANT: the rendered <article> box itself has its own outer padding
+ // (entryPaddingX/Y) that eats into the space available for the bubble/text — this was
+ // previously left out of the estimate entirely, so every box ended up a bit smaller
+ // than what the estimate assumed, silently clipping the last line or so of text. Both
+ // the width and height estimates below now reserve that outer padding explicitly.
+ const outerPadH=Math.max(6,Number(settings.entryPaddingX||14));
+ const outerPadV=Math.max(6,Number(settings.entryPaddingY||12));
+ const nameSize=Number(settings.nameSize||23);
+ const orgSize=Number(settings.orgSize||18);
+ const timeSize=Number(settings.timeSize||18);
+ const msgFontSize=Math.max(12, Number(settings.messageSize||24)-4);
+ const lineH=msgFontSize*1.3;
+ if(isPolaroid){
+  // Just like kakao/avatar mode, the box size is driven by the message content plus a
+  // FIXED, modest photo slot — NOT by the admin's configured photo width/height. If a
+  // big configured photo size grew the box, only 2-3 entries could fit per page (since
+  // the packing search below refuses to shrink below natural size); reserving a fixed
+  // slot instead keeps every polaroid entry roughly as compact as a kakao-style one, so
+  // the requested 7~9-per-page count is reliably achievable. The photo is simply
+  // scaled/cropped to fit this slot at render time regardless of its configured size.
+  const photoSlot=70;
+  w=Math.max(w, photoSlot+2*outerPadH+20);
+  const textColW=w-2*outerPadH-2*bubblePadH;
+  const lines=vertical2EstimateLines(msg, textColW, msgFontSize);
+  const chrome=bubblePadV*2+Math.max(20,Math.round(timeSize*2.1))+14+(nameSize*1.25+6);
+  const h=Math.ceil(Math.max(140, 2*outerPadV+photoSlot+6/*gap*/+chrome+lines*lineH));
+  return {w:Math.ceil(w), h};
+ } else {
+  const gap=10;
+  w=Math.max(w, photoW+gap+220+2*outerPadH); // photo column + gap + a reasonable minimum text column + outer padding
+  const textColW=w-2*outerPadH-photoW-gap-2*bubblePadH;
+  const lines=vertical2EstimateLines(msg, textColW, msgFontSize);
+  const chrome=(nameSize*1.25+5)+bubblePadV*2+(orgSize*1.3+5)+Math.max(20,Math.round(timeSize*2.1))+14;
+  const textSideH=chrome+lines*lineH;
+  // NOTE: box height is driven ONLY by the message content, not by the configured
+  // avatar photo height — otherwise a large photo height setting would force the whole
+  // box (and, via scatterPack's shared per-group scale, the whole message text) to
+  // shrink to fit, cutting the message off. The avatar is simply clamped/cropped to fit
+  // this message-driven height at render time instead of growing it.
+  const h=Math.ceil(Math.max(100, 2*outerPadV+textSideH));
+  return {w:Math.ceil(w), h};
+ }
+}
+function vertical2ScatterMarkup(shown){
+ const boxW=Math.max(240, largeBox.clientWidth || window.innerWidth*Number(settings.largeBoxWidth||96)/100);
+ const boxH=Math.max(160, largeBox.clientHeight || window.innerHeight*normalizePercentHeight(settings.largeBoxHeight,68,100)/100);
+ // Guestbook entries come down in chunks of up to 7-9 at a time ("7~9개씩"). Items are
+ // ALWAYS rendered at their natural, full configured size (scale 1) — never shrunk to
+ // cram more in. If a chunk's natural size wouldn't fit the box without shrinking, fewer
+ // items are placed on that page instead (the rest simply appear on the next page), so
+ // message text size and readability stay identical for every entry, whether or not it
+ // has a photo, and no message ever gets cut off just because a page felt crowded.
+ const groups=[];
+ let remaining=shown.slice();
+ while(remaining.length){
+  const maxTry=Math.min(7+Math.floor(Math.random()*3), remaining.length); // 7,8, or 9
+  let chosenCount=1, chosenDims=null, chosenBest=null;
+  for(let count=maxTry; count>=1; count--){
+   const candidateDims=remaining.slice(0,count).map(vertical2ScatterDims);
+   const best=bestFitScale(candidateDims, boxW, boxH);
+   if(best.scale>=1 || count===1){
+    chosenCount=count; chosenDims=candidateDims; chosenBest=best; break;
+   }
+  }
+  groups.push({items:remaining.slice(0,chosenCount), dims:chosenDims, best:chosenBest});
+  remaining=remaining.slice(chosenCount);
+ }
+ if(!groups.length) groups.push({items:[],dims:[],best:null});
+ const html=groups.map(g=>{
+  if(!g.items.length) return `<div style="position:relative;width:100%;height:${boxH}px"></div>`;
+  const positions=assignPositions(g.dims, boxW, boxH, g.best, 1);
+  const itemsHtml=g.items.map((e,gi)=>vertical2EntryHtml(e, shown.indexOf(e), false, positions[gi])).join('');
+  return `<div style="position:relative;width:100%;height:${boxH}px">${itemsHtml}</div>`;
+ }).join('');
+ return {boxH, html};
+}
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function fmtTime(t){const d=new Date(Number(t)||Date.now());const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+
+function shuffleCopy(arr){
+ const a=arr.slice();
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  const t=a[i];a[i]=a[j];a[j]=t;
+ }
+ return a;
+}
+function chooseRandomFittingSet(data, count, keepLatest=true){
+ if(!data.length||count<=0)return {items:[],positions:[]};
+ const latest=data[0];
+ const pool=keepLatest?data.slice(1):data.slice();
+ function makeSample(){
+  if(!keepLatest)return shuffleCopy(data).slice(0,count);
+  const rest=shuffleCopy(pool).slice(0,Math.max(0,count-1));
+  return [latest].concat(rest);
+ }
+ for(let tries=0;tries<24;tries++){
+  const sample=makeSample();
+  const fit=getFittingRandomSet(sample,count);
+  // getFittingRandomSet keeps the first item when it has to reduce count,
+  // so the newest entry remains in the next random group.
+  if(fit.items && fit.items.length && fit.items[0] && fit.items[0].key===latest.key)return fit;
+ }
+ return getFittingRandomSet(makeSample(),count);
+}
+function updateRandomMarkup(markup, useFade){
+ const fadeOn=useFade && settings.randomFadeEnabled==='yes' && list.innerHTML.trim();
+ const dur=Math.max(0.1,Number(settings.randomFadeDuration||1.2))*1000;
+ list.style.transition=fadeOn?`opacity ${dur}ms ease`:'none';
+ if(randomFadeTimer)clearTimeout(randomFadeTimer);
+ if(fadeOn){
+  list.style.opacity='0';
+  randomFadeTimer=setTimeout(()=>{list.innerHTML=markup;list.style.opacity='1';},dur);
+ }else{
+  list.style.opacity='1';
+  list.innerHTML=markup;
+ }
+}
+function clearRandomShuffleTimer(){
+ if(randomShuffleTimer){clearInterval(randomShuffleTimer);randomShuffleTimer=null;}
+}
+function setupRandomShuffleTimer(overflow){
+ clearRandomShuffleTimer();
+ if(settings.layoutMode==='random' && overflow && settings.randomOverflowShuffleEnabled==='yes'){
+  const sec=Math.max(2,Number(settings.randomShuffleInterval||12));
+  randomShuffleTimer=setInterval(()=>render(),sec*1000);
+ }
+}
+
+
+
+function escAttr(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function deterministicShuffle(arr, seed){
+ const out=arr.slice();
+ let x=(Number(seed)||Date.now())%2147483647; if(x<=0)x+=2147483646;
+ for(let i=out.length-1;i>0;i--){x=x*16807%2147483647; const j=x%(i+1); [out[i],out[j]]=[out[j],out[i]];}
+ return out;
+}
+function boothSelfieUploadUrl(){
+ const base=location.href.split('#')[0].split('?')[0].replace(/screen\.html$/,'input.html');
+ return base+(base.includes('?')?'&':'?')+'boothSelfieUpload=1';
+}
+function renderBoothSelfieQr(){
+ const box=document.getElementById('boothSelfieQrBox'), img=document.getElementById('boothSelfieQrImg'), label=document.getElementById('boothSelfieQrLabel');
+ if(!box||!img)return;
+ const enabled=String(settings.boothSelfieQrEnabled||'yes')==='yes';
+ box.style.display=enabled?'block':'none';
+ if(!enabled)return;
+ const size=Math.max(60,Number(settings.boothSelfieQrSize||150));
+ box.style.left=Number(settings.boothSelfieQrX||78)+'vw';
+ box.style.top=Number(settings.boothSelfieQrY||20)+'px';
+ box.style.width=size+'px';
+ img.style.height=size+'px';
+ img.src='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(boothSelfieUploadUrl());
+ if(label) label.textContent=settings.boothSelfieQrLabel||'Booth Selfie Upload';
+}
+
+function renderBoothSelfies(){
+ const area=document.getElementById('boothSelfieArea'), list=document.getElementById('boothSelfieList');
+ if(!area||!list)return;
+ if(boothSelfieTicker){cancelAnimationFrame(boothSelfieTicker);boothSelfieTicker=null;}
+ if(window.__boothSelfieShuffleTimer){clearTimeout(window.__boothSelfieShuffleTimer);window.__boothSelfieShuffleTimer=null;}
+ area.style.display=settings.boothSelfieAreaEnabled==='no'?'none':'block';
+ if(settings.boothSelfieAreaEnabled==='no'){list.innerHTML='';return;}
+ const selfieFadeOn=String(settings.boothSelfieFadeEnabled||'yes')==='yes';
+ const selfieFadeMs=Math.max(0.05,Number(settings.boothSelfieFadeDuration||1))*1000;
+ list.style.transition=selfieFadeOn?('opacity '+(selfieFadeMs/1000)+'s ease'):'none';
+ if(selfieFadeOn && list.innerHTML && !window.__boothSelfieSkipFade){
+  window.__boothSelfieSkipFade=true;
+  list.style.opacity='0';
+  setTimeout(()=>{renderBoothSelfies(); window.__boothSelfieSkipFade=false;}, selfieFadeMs);
+  return;
+ }
+ list.style.opacity='1';
+ area.style.left=Number(settings.boothSelfieAreaX||5)+'vw';
+ area.style.top=Number(settings.boothSelfieAreaY||72)+'px';
+ area.style.width=Number(settings.boothSelfieAreaWidth||90)+'vw';
+ const hPct=Math.max(5,Math.min(100,Number(settings.boothSelfieAreaHeightPercent||22)));
+ area.style.height=Math.max(80,window.innerHeight*hPct/100)+'px';
+ area.style.background=bgStyle(settings.boothSelfieAreaBgColor||'rgba(255,255,255,0)',settings.boothSelfieAreaBgImage||'');
+ area.style.borderRadius=Math.max(0,Number(settings.boothSelfieAreaBorderRadius||0))+'px';
+ document.documentElement.style.setProperty('--booth-selfie-radius',Math.max(0,Number(settings.boothSelfiePhotoRadius||16))+'px');
+ const visibleCount=Math.max(1,Math.min(100,Number(settings.boothSelfieVisibleCount||12)));
+ const allPhotos=boothSelfies.filter(x=>x.image&&x.showOnScreen!==false);
+ if(!allPhotos.length){list.innerHTML='';return;}
+ const shuffleOn=String(settings.boothSelfieOverflowShuffleEnabled||'yes')==='yes';
+ let photos;
+ if(shuffleOn && allPhotos.length>visibleCount){
+   const seedBucket=Math.floor(Date.now()/(Math.max(1,Number(settings.boothSelfieShuffleInterval||12))*1000));
+   photos=deterministicShuffle(allPhotos,seedBucket).slice(0,visibleCount);
+   window.__boothSelfieShuffleTimer=setTimeout(renderBoothSelfies,Math.max(1,Number(settings.boothSelfieShuffleInterval||12))*1000);
+ }else{
+   photos=allPhotos.slice(0,visibleCount);
+ }
+ let w=Math.max(60,Number(settings.boothSelfiePhotoWidth||170));
+ let h=Math.max(60,Number(settings.boothSelfiePhotoHeight||120));
+ let gap=Math.max(0,Number(settings.boothSelfieGap||12));
+ let pad=Math.max(0,Number(settings.boothSelfiePhotoBoxPadding||6));
+ const boxBg=bgStyle(settings.boothSelfiePhotoBoxBgColor||'rgba(255,255,255,0.94)',settings.boothSelfiePhotoBoxBgImage||'');
+ const rotateOn=String(settings.boothSelfieRotate||'yes')==='yes';
+ const layout=String(settings.boothSelfieLayout||'scroll');
+ const areaW0=area.clientWidth||window.innerWidth*Number(settings.boothSelfieAreaWidth||90)/100;
+ const areaH0=area.clientHeight||window.innerHeight*hPct/100;
+ if(areaContentAutoScaleEnabled()){
+  const maxH=Math.max(40,areaH0-gap*2);
+  const maxW=Math.max(40,areaW0-gap*2);
+  const scale=Math.max(0.18,Math.min(1,maxH/(h+pad*2),maxW/(w+pad*2)));
+  w=Math.max(24,Math.floor(w*scale));
+  h=Math.max(24,Math.floor(h*scale));
+  gap=Math.max(2,Math.floor(gap*scale));
+  pad=Math.max(0,Math.floor(pad*scale));
+ }
+ function photoHtml(p,i,extraStyle=''){
+  const rot=rotateOn?(((i%5)-2)*1.4):0;
+  return '<div class="boothSelfiePhoto" style="width:'+w+'px;height:'+h+'px;padding:'+pad+'px;background:'+boxBg+';transform:rotate('+rot+'deg);'+extraStyle+'"><img src="'+escAttr(p.image)+'" alt="Booth selfie"></div>';
+ }
+ if(layout==='random'){
+  list.innerHTML='';
+  const areaW=area.clientWidth||window.innerWidth*Number(settings.boothSelfieAreaWidth||90)/100;
+  const areaH=area.clientHeight||window.innerHeight*hPct/100;
+  const cellW=w+pad*2+gap;
+  const cellH=h+pad*2+gap;
+  const cols=Math.max(1,Math.floor(areaW/cellW));
+  const rows=Math.max(1,Math.floor(areaH/cellH));
+  const max=cols*rows;
+  const shown=photos.slice(0,max);
+  shown.forEach((p,i)=>{
+   const col=i%cols,row=Math.floor(i/cols);
+   const freeX=Math.max(0,areaW-cols*cellW);
+   const freeY=Math.max(0,areaH-rows*cellH);
+   const x=Math.max(0,freeX/2+col*cellW);
+   const y=Math.max(0,freeY/2+row*cellH);
+   const el=document.createElement('div');
+   el.style.position='absolute';
+   el.style.left=x+'px';
+   el.style.top=y+'px';
+   el.innerHTML=photoHtml(p,i);
+   list.appendChild(el.firstChild);
+   const child=list.lastChild;
+   child.style.position='absolute';child.style.left=x+'px';child.style.top=y+'px';
+  });
+  return;
+ }
+ // Scroll layout: recent photos first, arranged in one or two photos per row, then the row set scrolls downward.
+ const perRow=(areaW0 >= (w+pad*2)*2 + gap*3) ? 2 : 1;
+ const rows=[];
+ for(let i=0;i<photos.length;i+=perRow){rows.push(photos.slice(i,i+perRow));}
+ const rowMarkup=rows.map((row,ri)=>'<div class="boothSelfieRow" style="display:flex;justify-content:center;align-items:center;gap:'+gap+'px;margin-bottom:'+gap+'px;width:100%">'+row.map((p,j)=>photoHtml(p,ri*perRow+j)).join('')+'</div>').join('');
+ list.innerHTML='<div id="boothSelfieTrack" style="display:flex;flex-direction:column;align-items:center;width:100%;height:max-content">'+rowMarkup+rowMarkup+rowMarkup+'</div>';
+ const track=document.getElementById('boothSelfieTrack');
+ let y=0,last=0;
+ function tick(ts){
+  if(!last)last=ts;
+  const dt=ts-last;last=ts;
+  y+=Number(settings.boothSelfieScrollSpeed||24)*dt/1000;
+  const cycle=Math.max(1,track.scrollHeight/3);
+  if(y>=cycle)y-=cycle;
+  track.style.transform='translateY('+(-cycle+y)+'px)';
+  boothSelfieTicker=requestAnimationFrame(tick);
+ }
+ track.style.transform='translateY('+(-Math.max(1,track.scrollHeight/3))+'px)';
+ boothSelfieTicker=requestAnimationFrame(tick);
+}
+
+function render(){
+ if(ticker)cancelAnimationFrame(ticker);
+ list.style.transform='translateY(0)';
+ let data=entries.filter(e=>e.showOnScreen!==false).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100);
+ const visible=Math.max(1,Math.min(100,Number(settings.visibleEntryCount||6)));
+ applyRandomZoneBox();
+ if(settings.layoutMode==='random'){
+  applyRandomCanvasBox();
+  list.style.display='block';
+  list.style.transform='translateY(0)';
+  if(ticker)cancelAnimationFrame(ticker);
+  if(!data.length){clearRandomShuffleTimer();updateRandomMarkup('<div style="position:fixed;left:0;right:0;top:45vh;text-align:center;font-size:30px;color:#102044">No messages yet.</div>',false);return;}
+  const recentFit=getFittingRandomSet(data,visible);
+  const requested=Math.min(data.length,visible,100);
+  const capacity=Math.max(1,Math.min(requested,(recentFit.items||[]).length));
+  const overflow=data.length>capacity || capacity<requested;
+  let fitting=recentFit;
+  if(overflow && settings.randomOverflowShuffleEnabled==='yes'){
+    fitting=chooseRandomFittingSet(data,capacity,true);
+  }
+  const randomData=fitting.items||[];
+  const positions=fitting.positions||[];
+  const markup=randomData.map((e,i)=>entryHtml(e,i,true,positions[i])).join('');
+  updateRandomMarkup(markup, overflow);
+  setupRandomShuffleTimer(overflow);
+  return;
+ } else {
+  clearRandomShuffleTimer();
+  list.style.opacity='1';
+ }
+ applyConfiguredLargeBox();
+ list.style.display='flex';
+ let shown=data;
+ if(!shown.length){list.innerHTML='<div style="padding:80px;text-align:center;font-size:30px">아직 등록된 메시지가 없습니다.</div>';return}
+ let entryMarkup;
+ if(settings.layoutMode==='vertical2'){
+  entryMarkup=vertical2ScatterMarkup(shown).html;
+ } else if(settings.layoutMode==='verticalPolaroid'){
+  entryMarkup=shown.map((e,i)=>polaroidStackEntryHtml(e,i)).join('');
+ } else {
+  entryMarkup=shown.map((e,i)=>entryHtml(e,i,false)).join('');
+ }
+ // When downward scrolling is enabled and there are at least 3 entries,
+ // duplicate the same entry set above and below the visible set.
+ // This keeps the large box filled and creates a seamless infinite loop.
+ if(settings.scrollEnabled==='yes'&&shown.length>=3){
+  list.innerHTML='<div class="scrollSegment">'+entryMarkup+'</div><div class="scrollSegment">'+entryMarkup+'</div><div class="scrollSegment">'+entryMarkup+'</div>';
+  startScrollDownward();
+ }else{
+  list.innerHTML=entryMarkup;
+ }
+}
+function buildRowMarkup(list,perRow){
+ let out='';
+ for(let idx=0;idx<list.length;idx+=perRow){
+  const group=list.slice(idx,idx+perRow);
+  const cells=group.map((e,gi)=>entryHtml(e,idx+gi,false,null,true)).join('');
+  out+=`<div class="entryRow" style="display:flex;gap:${settings.entryGap}px;width:100%;margin-bottom:${settings.entryGap}px;align-items:stretch">${cells}</div>`;
+ }
+ return out;
+}
+function startScrollDownward(initialY){
+ let y=Number(initialY)||0,last=0;
+ const segment=list.querySelector('.scrollSegment');
+ if(!segment)return;
+ const cycle=Math.max(1,segment.scrollHeight);
+ if(y>=cycle||y<0)y=((y%cycle)+cycle)%cycle;
+ list.style.transform=`translateY(${-cycle+y}px)`;
+ function tick(ts){
+  if(!last)last=ts;
+  const dt=ts-last;last=ts;
+  y+=Number(settings.scrollSpeed||18)*dt/1000;
+  if(y>=cycle)y-=cycle;
+  // Positive movement from -cycle toward 0 makes entries move from top to bottom.
+  list.style.transform=`translateY(${-cycle+y}px)`;
+  ticker=requestAnimationFrame(tick);
+ }
+ ticker=requestAnimationFrame(tick);
+}
+// Called once a freshly-arrived entry's center-stage announcement finishes. Rather than
+// calling the normal render() — which rebuilds every page from scratch and snaps the
+// whole scroll back to its start, making all currently-visible entries jump at once —
+// this quietly slots the new entry in as its own page exactly at the point the scroll
+// is CURRENTLY about to reveal next (not way at the back of the loop), and nudges the
+// scroll offset by exactly that page's height so every entry already in motion keeps
+// gliding down without any visible jump. The new entry then scrolls into view within
+// moments, as part of the very next batch, instead of waiting out almost a full lap.
+function mergeNewEntryIntoScroll(entry){
+ const segments=list.querySelectorAll('.scrollSegment');
+ const firstSegChildren=segments.length?Array.from(segments[0].children):[];
+ if(!(settings.layoutMode==='vertical2' && settings.scrollEnabled==='yes') || segments.length<3 || !ticker || !firstSegChildren.length){
+  render();
+  return;
+ }
+ const oldCycle=Math.max(1,segments[0].scrollHeight);
+ const m=/translateY\(([-\d.]+)px\)/.exec(list.style.transform||'');
+ const oldT=m?parseFloat(m[1]):-oldCycle;
+ const yOld=oldT+oldCycle;
+ // The scroll is currently about to reveal, at the box's top edge, whatever content
+ // sits at this offset from the start of one (repeating) segment.
+ const topOffset=((oldCycle-yOld)%oldCycle+oldCycle)%oldCycle;
+ let acc=0, insertBeforeIndex=firstSegChildren.length;
+ for(let idx=0; idx<firstSegChildren.length; idx++){
+  const h=firstSegChildren[idx].offsetHeight||0;
+  if(acc+h>topOffset+0.5){ insertBeforeIndex=idx; break; }
+  acc+=h;
+ }
+ const boxW=Math.max(240, largeBox.clientWidth || window.innerWidth*Number(settings.largeBoxWidth||96)/100);
+ const boxH=Math.max(160, largeBox.clientHeight || window.innerHeight*normalizePercentHeight(settings.largeBoxHeight,68,100)/100);
+ const dims=[vertical2ScatterDims(entry)];
+ const best=bestFitScale(dims, boxW, boxH);
+ const positions=assignPositions(dims, boxW, boxH, best, 1);
+ const pageHtml=`<div style="position:relative;width:100%;height:${boxH}px">${vertical2EntryHtml(entry, 0, false, positions[0])}</div>`;
+ segments.forEach(seg=>{
+  const kids=Array.from(seg.children);
+  const refNode=kids[insertBeforeIndex]||null;
+  const wrapper=document.createElement('div');
+  wrapper.innerHTML=pageHtml;
+  seg.insertBefore(wrapper.firstElementChild, refNode);
+ });
+ if(ticker)cancelAnimationFrame(ticker);
+ startScrollDownward(yOld);
+}
+function updateFullscreenButton(){fullscreenBtn.textContent=document.fullscreenElement?'Exit Full Screen':'Full Screen';}
+async function toggleScreenFullscreen(){try{if(!document.fullscreenElement){await document.documentElement.requestFullscreen();}else{await document.exitFullscreen();}}catch(e){console.warn('Full screen mode is not available:',e);}}
+fullscreenBtn.onclick=toggleScreenFullscreen;
+// Entering/leaving full screen changes the browser viewport size, which the large
+// scrolling box (sized in vw/vh) already follows visually — but the downward-scroll
+// animation loop and the vertical2 page layout were computed for the OLD box size, so
+// without a re-render the messages stay confined to the box's previous, smaller
+// dimensions. Re-running render() a beat after the change (once the browser has
+// actually finished resizing) lets the guestbook re-lay itself out to fill the new,
+// larger box.
+function reflowAfterViewportChange(){
+ const old=document.getElementById('incomingEntryOverlay');
+ if(old)return; // don't interrupt the single-entry announcement animation
+ requestAnimationFrame(()=>requestAnimationFrame(render));
+}
+document.addEventListener('fullscreenchange',()=>{updateFullscreenButton();reflowAfterViewportChange();});
+let viewportResizeTimer=null;
+window.addEventListener('resize',()=>{
+ if(viewportResizeTimer)clearTimeout(viewportResizeTimer);
+ viewportResizeTimer=setTimeout(reflowAfterViewportChange,200);
+});
+updateFullscreenButton();
+localVideoFile.onchange=()=>{const f=localVideoFile.files[0]; if(f){selectedLocalVideoUrl=URL.createObjectURL(f);localVideoStatus.textContent='Selected: '+f.name}};
+localVideoFile2.onchange=()=>{const f=localVideoFile2.files[0]; if(f){selectedLocalVideoUrl2=URL.createObjectURL(f);localVideoStatus2.textContent='Selected: '+f.name}};
+function bindLocalBgFile(inputEl, slot){
+ inputEl.onchange=()=>{
+  const f=inputEl.files[0]; if(!f)return;
+  const url=URL.createObjectURL(f);
+  selectedLocalBgUrls[slot]=url;
+  localBgStatus.textContent=`LOCAL${slot}: ${f.name}`;
+  applySettings();
+ };
+}
+for(let slot=1;slot<=10;slot++){
+ const el=document.getElementById('localBgFile'+slot);
+ if(el)bindLocalBgFile(el,slot);
+}
+function getYouTubeId(u){let m=String(u).match(/[?&]v=([^&]+)/)||String(u).match(/youtu\.be\/([^?&/]+)/);return m?m[1]:''} function embedUrl(u){const y=getYouTubeId(u);return y?'https://www.youtube.com/embed/'+y+'?autoplay=1':''}
+let closingVideoTimer=null;
+function isDirectPlayable(url){url=String(url||'').trim(); return url.toUpperCase()==='LOCAL' || (!!url && !embedUrl(url));}
+function openVideo(url,slot,onEndedOverride){
+ slot=String(slot||'1');
+ url=String(url||'').trim();
+ if(url.toUpperCase()==='LOCAL')url=(slot==='2'?selectedLocalVideoUrl2:selectedLocalVideoUrl);
+ if(!url){alert('영상 URL 또는 로컬 영상이 선택되지 않았습니다.');return}
+ // If a fade-out from a previous close was still in progress, cancel it first.
+ if(closingVideoTimer){clearTimeout(closingVideoTimer);closingVideoTimer=null;}
+ const fadeInMs=Math.max(0,Number(settings.videoFadeInDuration ?? 0.8))*1000;
+ videoPlayer.onended=null;
+ if(fadeInMs>0){
+  // Start fully transparent, show the overlay, force the browser to register that
+  // state, then animate to fully opaque — this is what makes the fade-IN visible
+  // rather than jumping straight from 0 to 1 in the same frame.
+  videoOverlay.style.transition='none';
+  videoOverlay.style.opacity='0';
+  videoOverlay.style.display='block';
+  void videoOverlay.offsetWidth;
+  videoOverlay.style.transition=`opacity ${fadeInMs}ms ease`;
+  videoOverlay.style.opacity='1';
+ } else {
+  videoOverlay.style.transition='none';
+  videoOverlay.style.opacity='1';
+  videoOverlay.style.display='block';
+ }
+ const emb=embedUrl(url);
+ if(emb){
+  // YouTube-style embeds: the browser can't tell us when playback ends, so this case
+  // still requires a manual close via the "닫기" button.
+  videoPlayer.style.display='none';videoFrame.style.display='block';videoFrame.src=emb;
+ } else {
+  videoFrame.style.display='none';videoPlayer.style.display='block';videoPlayer.src=url;videoPlayer.play().catch(()=>{});
+  // By default, when a direct video file / local video finishes, automatically close
+  // the overlay and return to the guestbook screen — unless the caller (e.g. the
+  // 1→2 sequential feature) supplies its own onEndedOverride to chain to another video.
+  videoPlayer.onended=onEndedOverride||(()=>{videoPlayer.onended=null;closeVid();});
+ }
+}
+function closeVid(){
+ videoPlayer.onended=null;
+ if(closingVideoTimer){clearTimeout(closingVideoTimer);closingVideoTimer=null;}
+ const fadeOutMs=Math.max(0,Number(settings.videoFadeOutDuration ?? 0.8))*1000;
+ function finishClose(){
+  videoOverlay.style.display='none';
+  videoOverlay.style.transition='none';
+  videoOverlay.style.opacity='1';
+  videoPlayer.pause();
+  videoPlayer.removeAttribute('src');
+  videoFrame.removeAttribute('src');
+  closingVideoTimer=null;
+ }
+ if(fadeOutMs<=0){finishClose();return;}
+ videoOverlay.style.transition=`opacity ${fadeOutMs}ms ease`;
+ videoOverlay.style.opacity='0';
+ closingVideoTimer=setTimeout(finishClose,fadeOutMs);
+}
+closeVideo.onclick=closeVid;
+function preloadOne(url,videoEl){
+ url=String(url||'').trim();
+ if(url && isDirectPlayable(url) && url.toUpperCase()!=='LOCAL'){videoEl.preload='auto';videoEl.src=url;videoEl.load();}
+}
+function preloadAll(){
+ if(settings.preloadVideo==='yes')preloadOne(settings.videoUrl,videoPreload1);
+ if(settings.preloadVideo2==='yes')preloadOne(settings.videoUrl2,videoPreload2);
+}
+// 영상 1 → 영상 2를 이어서 재생 (직접 영상 파일 / 로컬 영상에서만 종료 시점을 감지할 수 있어
+// 자동으로 다음 영상으로 넘어갑니다. 유튜브 등 임베드 영상은 영상 1만 재생되고 멈춥니다.)
+// 영상 2가 끝나면 openVideo의 기본 동작에 따라 자동으로 방명록 화면으로 돌아갑니다.
+function playSequential(){
+ const url1=String(settings.videoUrl||'').trim();
+ const url2=String(settings.videoUrl2||'').trim();
+ openVideo(url1,'1', isDirectPlayable(url1)?(()=>{
+  videoPlayer.onended=null;
+  openVideo(url2,'2'); // uses the default onEnded behavior: auto-close after video 2
+ }):undefined);
+}
+function setupVideoAutoplay(){
+ if(videoAutoTimer1){clearInterval(videoAutoTimer1);videoAutoTimer1=null;}
+ if(videoAutoTimer2){clearInterval(videoAutoTimer2);videoAutoTimer2=null;}
+ if(videoSeqTimer){clearInterval(videoSeqTimer);videoSeqTimer=null;}
+ const isIdle=()=>videoOverlay.style.display!=='block';
+ if(settings.videoAutoplayEnabled==='yes'){
+  const ms=Math.max(1,Number(settings.videoAutoplayIntervalMin||30))*60000;
+  videoAutoTimer1=setInterval(()=>{if(isIdle())openVideo(settings.videoUrl,'1');},ms);
+ }
+ if(settings.video2AutoplayEnabled==='yes'){
+  const ms=Math.max(1,Number(settings.video2AutoplayIntervalMin||30))*60000;
+  videoAutoTimer2=setInterval(()=>{if(isIdle())openVideo(settings.videoUrl2,'2');},ms);
+ }
+ if(settings.videoSequentialAutoplayEnabled==='yes'){
+  const ms=Math.max(1,Number(settings.videoSequentialAutoplayIntervalMin||30))*60000;
+  videoSeqTimer=setInterval(()=>{if(isIdle())playSequential();},ms);
+ }
+}
+let lastActionCreatedAt=0;
+let actionListenerReady=false;
+actionRef.on('value',snap=>{
+ const a=snap.val();
+ if(!a||!a.type)return;
+ if(!actionListenerReady){
+  actionListenerReady=true;
+  if(a.createdAt)lastActionCreatedAt=a.createdAt;
+  return;
+ }
+ if(a.createdAt&&a.createdAt===lastActionCreatedAt)return;
+ if(a.createdAt)lastActionCreatedAt=a.createdAt;
+ if(a.type==='open-video-window')openVideo(a.url,a.slot);
+ if(a.type==='open-quiz-window'){const u=normalizeUrl(a.url||settings.quizWebsiteUrl); if(u){const w=window.open(u,'_blank','noopener,noreferrer,popup=yes,width='+window.screen.availWidth+',height='+window.screen.availHeight+',left=0,top=0'); if(!w){console.warn('Quiz popup was blocked. Please allow popups for this screen page.');}}}
+ if(a.type==='show-visitor-book')closeVid();
+});
+</script></body></html>
